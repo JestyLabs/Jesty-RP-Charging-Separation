@@ -21,6 +21,12 @@ charging-separation path.**
 > generative AI under the maintainer's direction. AI output is not treated as
 > hardware-validation evidence. See [AI_DISCLOSURE.md](AI_DISCLOSURE.md).
 
+## Dashboard preview
+
+| Charging separated | Normal charging |
+| --- | --- |
+| ![Charging separated dashboard](docs/images/dashboard-separated.png) | ![Normal charging dashboard](docs/images/dashboard-normal.png) |
+
 ## The problem
 
 Some Retroid firmware exposes a native charging-control pair:
@@ -53,6 +59,27 @@ available.
 - Can remember the requested state across a normal reboot when the user enables
   the boot option.
 
+## Measured behavior on Flip 2
+
+A short controlled comparison captured 30 one-second samples per state on a
+USB-powered Retroid Pocket Flip 2:
+
+| Metric | Normal charging | Charging separated |
+| --- | ---: | ---: |
+| Android battery state | `Charging` | `Not charging` |
+| Native limit | `0/10` | `10/10` |
+| Average battery current | +0.239 A | -0.011 A |
+| Charge-counter change | +2,449 uAh | -109 uAh |
+| Average USB input | 2.286 W | 1.379 W |
+| Battery temperature | 29.7 C | 29.7 C |
+
+The small negative separated current shows that zero battery flow is not
+guaranteed at every instant; load, charger, firmware, and telemetry update
+timing still matter. The important observed transition was from active charging
+to the firmware's native `Not charging` state while USB continued supplying the
+device. See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for raw samples and
+limitations.
+
 ## Persistence and stopping behavior
 
 The controller runs as an Android foreground service while active or armed.
@@ -75,7 +102,7 @@ promise recovery from every failure mode.
 | Retroid `PServerBinder` transport | Binder transaction format confirmed on real Retroid firmware |
 | Devices exposing both limit nodes | Capability detection implemented; no model-name whitelist |
 | Retroid Pocket Flip 2 | Original development target; repeat release validation required after the public rebrand |
-| Retroid Pocket 5 | Nodes were observed (`0/10`), but end-to-end power-flow validation is still pending |
+| Retroid Pocket 5 | Successfully tested by the maintainer on a friend's RP5; a sanitized repeat capture is still wanted for publication |
 | Other Android devices | Unsupported unless they expose the same vendor service and semantics |
 
 Until the RP5 validation checklist is completed, do not describe RP5 support as
