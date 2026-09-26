@@ -14,6 +14,7 @@ The maintainer supplied the following final public-release artwork:
 - `res/drawable-nodpi/jesty_rp_background_charging.png`
 - `res/drawable-nodpi/jesty_rp_wordmark.png`
 - `assets/branding/jesty_wordmark_header.png`
+- `assets/branding/jesty_rp_header_lockup.png`
 
 The two backgrounds visualize charging separated and normal battery charging.
 They are not licensed under GPL-3.0 and may be displayed only when referring to

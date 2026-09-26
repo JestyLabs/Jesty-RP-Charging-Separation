@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="assets/branding/jesty_wordmark_header.png" alt="Jesty" width="390">
+  <img src="assets/branding/jesty_rp_header_lockup.png" alt="Jesty RP Charging Separation" width="760">
 </p>
-
-<h1 align="center">Jesty RP Charging Separation</h1>
 
 <p align="center">
   <strong>Play while plugged in without continuously charging the battery.</strong><br>
@@ -23,8 +21,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev"><strong>Download the signed development pre-release</strong></a>
-  · <a href="docs/DEVICE-VALIDATION.md">Safety checklist</a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0"><strong>Download APK</strong></a>
+  · <a href="#what-does-it-do">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements and raw data</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
 </p>
@@ -184,8 +182,8 @@ unrelated Android system properties.
 
 ## Installation
 
-1. Download `Jesty-RP-Charging-Separation-1.3.0-dev.apk` from the
-   [GitHub release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev).
+1. Download `Jesty-RP-Charging-Separation-1.3.0.apk` from the
+   [GitHub release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Charging Separation**.

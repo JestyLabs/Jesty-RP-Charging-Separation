@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0-dev
+## 1.3.0
 
 - Prepared the first public Jesty source tree.
 - Renamed the public application and package to remove private development
@@ -10,7 +10,9 @@
   and optional boot persistence.
 - Added reproducible unsigned builds, public documentation, privacy checks, and
   explicit AI-assistance disclosure.
-- Integrated final charging-separated/battery-charging backgrounds and the new
-  Jesty header wordmark.
+- Integrated maintainer-supplied charging-separated/battery-charging
+  backgrounds and the approved horizontal project lockup.
 - The dashboard artwork now follows confirmed charging-separation state.
-- Post-rebrand hardware validation remains pending.
+- Added yellow brand tints to both dashboard toggles.
+- Added the compact Support Jesty / Star on GitHub footer.
+- Bumped the public update to versionCode 14 / versionName 1.3.0.

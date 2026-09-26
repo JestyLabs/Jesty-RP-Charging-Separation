@@ -2,9 +2,11 @@ package com.jesty.rpchargingseparation;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -17,6 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -139,6 +142,7 @@ public final class MainActivity extends Activity {
         separationToggle.setTextColor(Color.WHITE);
         separationToggle.setTextSize(18f);
         separationToggle.setTypeface(Typeface.DEFAULT_BOLD);
+        applyBrandToggleColors(separationToggle);
         switchPanel.addView(separationToggle, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
 
@@ -146,6 +150,7 @@ public final class MainActivity extends Activity {
         autoBootToggle.setText("Restore after a normal reboot");
         autoBootToggle.setTextColor(MUTED);
         autoBootToggle.setTextSize(13f);
+        applyBrandToggleColors(autoBootToggle);
         switchPanel.addView(autoBootToggle, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(42)));
         content.addView(switchPanel);
@@ -169,6 +174,7 @@ public final class MainActivity extends Activity {
                 10f, Color.rgb(151, 143, 170), false);
         legend.setPadding(dp(4), dp(4), 0, 0);
         content.addView(legend);
+        content.addView(buildSupportFooter());
         return root;
     }
 
@@ -177,27 +183,51 @@ public final class MainActivity extends Activity {
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
 
-        ImageView wordmark = new ImageView(this);
-        wordmark.setImageResource(R.drawable.jesty_rp_wordmark);
-        wordmark.setScaleType(ImageView.ScaleType.FIT_START);
-        wordmark.setAdjustViewBounds(true);
-        wordmark.setContentDescription("Jesty");
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(126), dp(62));
-        logoParams.setMargins(0, 0, dp(12), 0);
-        header.addView(wordmark, logoParams);
+        ImageView lockup = new ImageView(this);
+        lockup.setImageResource(R.drawable.jesty_rp_header_lockup);
+        lockup.setScaleType(ImageView.ScaleType.FIT_START);
+        lockup.setAdjustViewBounds(true);
+        lockup.setContentDescription("Jesty RP Charging Separation");
+        header.addView(lockup, new LinearLayout.LayoutParams(dp(300), dp(76)));
 
-        LinearLayout name = new LinearLayout(this);
-        name.setOrientation(LinearLayout.VERTICAL);
-        TextView rp = text("RP CHARGING", 16f, YELLOW, true);
-        rp.setLetterSpacing(0.07f);
-        name.addView(rp);
-        TextView separation = text("SEPARATION", 16f, PURPLE, true);
-        separation.setLetterSpacing(0.08f);
-        name.addView(separation);
-        header.addView(name, new LinearLayout.LayoutParams(0, -2, 1f));
-
-        header.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(64)));
+        header.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(78)));
         return header;
+    }
+
+    private View buildSupportFooter() {
+        LinearLayout footer = panel();
+        TextView title = text("JESTY APPS ARE FREE & OPEN SOURCE", 10f, MUTED, true);
+        title.setLetterSpacing(0.07f);
+        footer.addView(title);
+        TextView copy = text("Support device testing or star the project.", 11f, Color.WHITE, false);
+        copy.setPadding(0, dp(3), 0, dp(4));
+        footer.addView(copy);
+
+        LinearLayout links = row();
+        TextView support = footerLink("☕  SUPPORT JESTY");
+        support.setOnClickListener(v -> openExternal("https://buymeacoffee.com/jesty"));
+        links.addView(support, new LinearLayout.LayoutParams(0, dp(34), 1f));
+        TextView github = footerLink("★  STAR ON GITHUB");
+        github.setOnClickListener(v -> openExternal(
+                "https://github.com/JestyLabs/Jesty-RP-Charging-Separation"));
+        links.addView(github, new LinearLayout.LayoutParams(0, dp(34), 1f));
+        footer.addView(links);
+        return footer;
+    }
+
+    private TextView footerLink(String label) {
+        TextView link = text(label, 10f, YELLOW, true);
+        link.setGravity(Gravity.CENTER_VERTICAL);
+        link.setPadding(dp(4), 0, dp(4), 0);
+        return link;
+    }
+
+    private void openExternal(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Throwable error) {
+            Toast.makeText(this, "No browser is available", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private LinearLayout panel() {
@@ -252,6 +282,17 @@ public final class MainActivity extends Activity {
         text.setTextColor(color);
         if (bold) text.setTypeface(Typeface.DEFAULT_BOLD);
         return text;
+    }
+
+    private void applyBrandToggleColors(Switch toggle) {
+        int[][] states = new int[][] {
+                new int[] { android.R.attr.state_checked },
+                new int[] {}
+        };
+        toggle.setThumbTintList(new ColorStateList(states,
+                new int[] { YELLOW, Color.rgb(218, 211, 228) }));
+        toggle.setTrackTintList(new ColorStateList(states,
+                new int[] { Color.rgb(154, 108, 18), Color.rgb(86, 78, 101) }));
     }
 
     private void readAndRender() {
