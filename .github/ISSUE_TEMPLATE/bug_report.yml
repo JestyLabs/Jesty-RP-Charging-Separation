@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible charging-control or dashboard problem
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include device serials, account data, signing material, private paths, or unredacted logs.
+  - type: input
+    id: device
+    attributes:
+      label: Device and firmware
+      placeholder: Retroid model and firmware build
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: telemetry
+    attributes:
+      label: Redacted telemetry and final charging state
+      description: Include limit/max, battery status/current, USB power, and whether normal charging was restored.
+    validations:
+      required: true

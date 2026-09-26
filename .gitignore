@@ -1,0 +1,31 @@
+# Build outputs
+build/
+dist/
+*.apk
+*.aab
+*.apks
+*.idsig
+*.zip
+
+# Signing material and secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.env
+local.properties
+secrets.properties
+
+# Local tooling and logs
+.idea/
+.vscode/
+*.iml
+*.log
+*.dmp
+*.tmp
+*.bak
+chrome-*-profile/
+
+# Final artwork is supplied separately before release
+incoming-art/
