@@ -10,9 +10,15 @@
 </p>
 
 <p align="center">
+  <strong>No rooting the device. No Magisk. No terminal. No need to keep the app open.</strong><br>
+  Install it, enable Charging Separation, and forget about it.
+</p>
+
+<p align="center">
   <img alt="Retroid Pocket Flip 2" src="https://img.shields.io/badge/tested-Flip%202-7C3AED?style=for-the-badge">
   <img alt="Retroid Pocket 5" src="https://img.shields.io/badge/tested-RP5-F59E0B?style=for-the-badge">
   <img alt="Android 13" src="https://img.shields.io/badge/Android-13-3DDC84?style=for-the-badge&amp;logo=android&amp;logoColor=white">
+  <img alt="No Magisk or rooting" src="https://img.shields.io/badge/setup-no%20Magisk%20%2F%20rooting-16A34A?style=for-the-badge">
   <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
 </p>
 
@@ -29,30 +35,48 @@
 
 > [!WARNING]
 > **Made for compatible Retroid handhelds.** This is an unofficial community
-> project and is not made, supported, or endorsed by Retroid. It uses
-> firmware-dependent charging controls, so read the safety notes before enabling
-> it on a device or firmware version that has not been tested.
+> project and is not made, supported, or endorsed by Retroid. It uses Retroid's
+> built-in privileged `PServerBinder` service, so you do **not** need to root the
+> device yourself or install Magisk. Firmware changes or unsupported hardware can
+> still affect compatibility, so read the safety notes before enabling it on an
+> untested device or firmware version.
 
-## What does it do?
+## The simple version
 
-Normally, when you plug your Retroid into USB, the charger does two things at
-the same time:
+Normally, when you plug your Retroid into USB, the charger does two things:
 
 1. powers the handheld;
 2. charges the battery.
 
 That is fine most of the time. But during a long gaming session, docked setup,
-or overnight use, you may want the charger to keep powering the handheld
-without continuously pushing charge into the battery.
+or overnight use, you may want USB to keep powering the handheld **without
+continuously charging the battery at the same time**.
 
 **Jesty RP Charging Separation lets compatible Retroid devices stop actively
-charging the battery while USB remains connected and continues supplying the
+charging the battery while USB stays connected and continues supplying the
 running handheld.**
 
-You can turn it on from the app, see what the battery and charger are doing in
-real time, and turn normal charging back on whenever you want.
+For normal use, it is designed to be almost completely hands-off:
 
-| | Normal charging | Charging separation |
+- **No rooting the device**
+- **No Magisk**
+- **No terminal commands**
+- Install the APK and enable Charging Separation
+- You do **not** need to keep the dashboard open
+- You can **swipe the app away from Recents**
+- The background controller keeps working
+- Optional restore after a normal reboot
+- Automatic fallback to normal charging if safety checks fail
+- Designed for **minimal background CPU and battery overhead**
+- Does **not** change CPU governors, CPU frequencies, or unrelated system settings
+
+Basically:
+
+**install → enable → forget about it**
+
+## What does it do?
+
+| | Normal charging | Charging Separation |
 | --- | --- | --- |
 | USB connected | Yes | **Yes** |
 | Handheld keeps running from external power | Yes | **Yes** |
@@ -60,6 +84,12 @@ real time, and turn normal charging back on whenever you want.
 | Android battery state | `Charging` | **`Not charging`** |
 | Live battery / USB monitoring | Yes | **Yes** |
 | Automatic safety checks | — | **Yes** |
+| App needs to stay open | — | **No** |
+| Can be removed from Recents | — | **Yes** |
+| Magisk / rooting required | — | **No** |
+
+You can turn Charging Separation on from the app, see what the battery and
+charger are doing in real time, and return to normal charging whenever you want.
 
 ### See both states
 
@@ -71,15 +101,17 @@ real time, and turn normal charging back on whenever you want.
 
 - **Play plugged in without continuously charging the battery.**
 - **Uses Retroid's own charging controls** instead of a generic Android battery hack.
-- **No Magisk setup or terminal commands required.**
+- **No rooting, Magisk setup, or terminal commands required.**
+- **Keeps working without the dashboard open.**
+- **Keeps working after being swiped away from Recents.**
 - **Shows live battery current, USB power, temperature and charging state.**
-- **Checks that charging separation actually activated** before reporting success.
+- **Checks that Charging Separation actually activated** before reporting success.
 - **Automatically restores normal charging if the safety checks fail.**
 - **Can restore your preferred state after a normal reboot** if you enable that option.
-- **Works without keeping the dashboard open** while separation is active.
+- **Does not change CPU governors or CPU frequencies.**
 
 > [!NOTE]
-> Charging separation does **not** mean the battery is physically disconnected.
+> Charging Separation does **not** mean the battery is physically disconnected.
 > Small positive or negative battery currents can still appear depending on load,
 > charger, firmware and battery state. The goal is to stop active charging while
 > external power continues supplying the handheld.
@@ -94,7 +126,7 @@ real time, and turn normal charging back on whenever you want.
 | Unrelated Android devices | Unsupported |
 
 The app checks for the Retroid firmware controls it needs before enabling
-charging separation.
+Charging Separation.
 
 For technical reference, those controls include:
 
@@ -103,7 +135,7 @@ For technical reference, those controls include:
 /sys/class/power_supply/battery/charge_control_limit_max
 ```
 
-The app also relies on Retroid's privileged `PServerBinder` service.
+The app also relies on Retroid's built-in privileged `PServerBinder` service.
 
 ## Measured on a Retroid Pocket Flip 2
 
@@ -120,7 +152,7 @@ USB cable, screen state, workload and ambient conditions:
 | Direct-to-device proxy | 1.368 W | 1.422 W |
 | Battery temperature | 29.7 C | 29.7 C |
 
-The important part is the overall behavior: when charging separation was
+The important part is the overall behavior: when Charging Separation was
 enabled, Android changed to **Not charging**, battery current dropped to roughly
 zero, and the handheld continued running with USB connected.
 
@@ -137,7 +169,7 @@ to supply the handheld while the charging component disappeared.
 
 The app does more than simply flip a setting.
 
-Before and while charging separation is active, it:
+Before and while Charging Separation is active, it:
 
 - checks that the expected Retroid charging controls are available;
 - verifies the new charging limit after changing it;
@@ -156,23 +188,42 @@ unrelated Android system properties.
    [GitHub release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
-4. Enable **Charging separation**.
-5. Confirm the app reports `Not charging` and sensible battery/USB readings.
+4. Enable **Charging Separation**.
+5. Confirm the app reports `Not charging`.
+6. That's it.
+
+If you want to watch what is happening, the dashboard shows live battery, USB
+and temperature information — but **you do not need to leave it open**.
+
+### You do not need to
+
+- root the Retroid yourself;
+- install Magisk;
+- run ADB or terminal commands;
+- leave the app open;
+- leave the app in Recents;
+- manually keep checking the dashboard.
 
 The public package is `com.jesty.rpchargingseparation`. It installs separately
 from private GracaBlockBat development builds created before the public rebrand.
 
 ## Everyday behavior
 
-- While active or armed, the controller runs as an Android foreground service.
-- Closing the dashboard or removing it from recents does not normally stop it.
-- **Restore after a normal reboot** is optional.
-- Turning charging separation off restores normal charging.
-- A safety failure also restores normal charging automatically.
+Once enabled, the intended normal experience is **install and forget**.
 
-**Android Settings -> Force stop is different.** Force stop prevents the app and
-its boot receiver from running again until the app is opened manually. Do not
-use Force stop as the normal way to leave charging separation enabled.
+- While active or armed, the controller runs as an Android foreground service.
+- Closing the dashboard does not normally stop it.
+- Swiping the app away from Recents does not normally stop it.
+- The background controller continues monitoring the charging state.
+- **Restore after a normal reboot** is optional.
+- Turning Charging Separation off restores normal charging.
+- A safety failure restores normal charging automatically.
+- Background monitoring is deliberately lightweight and designed for minimal overhead.
+
+**Android Settings -> Force stop is different.** Force stop explicitly tells
+Android to stop the app and prevents the app and its boot receiver from running
+again until you open it manually. Swiping it away from Recents is fine; Force
+stop is not the same thing.
 
 <details>
 <summary><strong>Technical implementation</strong></summary>
