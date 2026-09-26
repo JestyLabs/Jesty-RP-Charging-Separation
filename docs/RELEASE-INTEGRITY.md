@@ -1,17 +1,22 @@
 # Release integrity
 
-## Current development build
+## Current signed pre-release
 
 - Package: `com.jesty.rpchargingseparation`
 - Version code: `13`
 - Version name: `1.3.0-dev`
 - Debuggable: `false`
-- Unsigned APK SHA-256 after final artwork integration:
-  `F4C98D4B5E78F9F9DB2327C0280CF36A7C5DF312ED962308492034A126D0776F`
+- APK: `Jesty-RP-Charging-Separation-1.3.0-dev.apk`
+- Signed APK SHA-256:
+  `51CA5C93F90ECA4AA4EEDA2A1F675AA9072AAEF98FA157DE1B503B426D5AF6BE`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
 
-The development hash is recorded to make the current staging state
-reproducible. It will change again when the final release version is selected
-or the APK is signed.
+The APK was rebuilt from the public source and signed outside the repository.
+It remains a pre-release because the renamed package and final artwork have not
+yet completed the real-device checklist, and RP5 end-to-end power-flow
+validation is still pending.
 
 ## Final release procedure
 
