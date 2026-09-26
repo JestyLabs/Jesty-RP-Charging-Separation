@@ -5,8 +5,8 @@
 <h1 align="center">Jesty RP Charging Separation</h1>
 
 <p align="center">
-  <strong>Use Retroid's native charging-separation path and see where the power is going.</strong><br>
-  Designed for Retroid Pocket Flip 2 and Retroid Pocket 5.
+  <strong>Play while plugged in without continuously charging the battery.</strong><br>
+  Uses Retroid's own charging controls on the Pocket 5 and Pocket Flip 2, with live battery/USB monitoring and automatic safety checks.
 </p>
 
 <p align="center">
@@ -17,9 +17,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/SirJesty/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev"><strong>Download the signed development pre-release</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev"><strong>Download the signed development pre-release</strong></a>
   · <a href="docs/DEVICE-VALIDATION.md">Safety checklist</a>
   · <a href="docs/BENCHMARKS.md">Measurements and raw data</a>
+  · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
 </p>
 
 <p align="center">
@@ -27,30 +28,38 @@
 </p>
 
 > [!WARNING]
-> This is an unofficial community project. It controls a vendor charging node
-> through Retroid's privileged `PServerBinder`. Firmware changes or unsupported
-> hardware can change that behavior. Read the safety notes before enabling it.
+> **Made for compatible Retroid handhelds.** This is an unofficial community
+> project and is not made, supported, or endorsed by Retroid. It uses
+> firmware-dependent charging controls, so read the safety notes before enabling
+> it on a device or firmware version that has not been tested.
 
-## What charging separation means
+## What does it do?
 
-Normally, plugging in USB powers the device **and charges the battery**. During
-long docked or handheld sessions that can keep adding charge and heat when you
-mainly want external power.
+Normally, when you plug your Retroid into USB, the charger does two things at
+the same time:
 
-On compatible Retroid firmware, charging separation asks the native charging
-controller to stop actively charging the battery while USB continues supplying
-the running device.
+1. powers the handheld;
+2. charges the battery.
 
-| | Normal charging | Charging separated |
+That is fine most of the time. But during a long gaming session, docked setup,
+or overnight use, you may want the charger to keep powering the handheld
+without continuously pushing charge into the battery.
+
+**Jesty RP Charging Separation lets compatible Retroid devices stop actively
+charging the battery while USB remains connected and continues supplying the
+running handheld.**
+
+You can turn it on from the app, see what the battery and charger are doing in
+real time, and turn normal charging back on whenever you want.
+
+| | Normal charging | Charging separation |
 | --- | --- | --- |
+| USB connected | Yes | **Yes** |
+| Handheld keeps running from external power | Yes | **Yes** |
+| Battery actively charging | Yes | **No** |
 | Android battery state | `Charging` | **`Not charging`** |
-| Native charge limit | `0/10` | **`10/10`** |
-| USB still connected | yes | **yes** |
-| App monitors battery flow | yes | **yes, with automatic safety checks** |
-
-This is not a generic Android battery hack and it does not claim to physically
-disconnect the battery. Small positive or negative battery currents can still
-appear as load and firmware conditions change.
+| Live battery / USB monitoring | Yes | **Yes** |
+| Automatic safety checks | — | **Yes** |
 
 ### See both states
 
@@ -58,29 +67,48 @@ appear as load and firmware conditions change.
 | --- | --- |
 | ![Charging separated dashboard](docs/images/dashboard-separated.png) | ![Normal charging dashboard](docs/images/dashboard-normal.png) |
 
+## Why use it?
+
+- **Play plugged in without continuously charging the battery.**
+- **Uses Retroid's own charging controls** instead of a generic Android battery hack.
+- **No Magisk setup or terminal commands required.**
+- **Shows live battery current, USB power, temperature and charging state.**
+- **Checks that charging separation actually activated** before reporting success.
+- **Automatically restores normal charging if the safety checks fail.**
+- **Can restore your preferred state after a normal reboot** if you enable that option.
+- **Works without keeping the dashboard open** while separation is active.
+
+> [!NOTE]
+> Charging separation does **not** mean the battery is physically disconnected.
+> Small positive or negative battery currents can still appear depending on load,
+> charger, firmware and battery state. The goal is to stop active charging while
+> external power continues supplying the handheld.
+
 ## Supported devices
 
 | Device | Current evidence |
 | --- | --- |
-| **Retroid Pocket Flip 2** | Public APK installed and measured; enable/disable and restoration confirmed |
-| **Retroid Pocket 5** | Successfully tested by the maintainer on a friend's RP5; sanitized repeat telemetry is still wanted |
-| Other Retroid models | Capability detection is used instead of a model-name whitelist; treat unmeasured devices as unsupported |
+| **Retroid Pocket Flip 2** | Public APK installed, measured and repeatedly tested |
+| **Retroid Pocket 5** | Successfully tested; more repeat telemetry is welcome |
+| Other Retroid models | Not validated yet — treat as unsupported until tested |
 | Unrelated Android devices | Unsupported |
 
-The required firmware controls are:
+The app checks for the Retroid firmware controls it needs before enabling
+charging separation.
+
+For technical reference, those controls include:
 
 ```text
 /sys/class/power_supply/battery/charge_control_limit
 /sys/class/power_supply/battery/charge_control_limit_max
 ```
 
-The app also requires Retroid's privileged `PServerBinder` service. Merely
-having similarly named files is not sufficient proof of compatibility.
+The app also relies on Retroid's privileged `PServerBinder` service.
 
 ## Measured on a Retroid Pocket Flip 2
 
-A controlled comparison captured 30 one-second samples per state with the same
-USB cable, screen state, workload, and ambient conditions:
+A controlled comparison captured 30 one-second samples per state using the same
+USB cable, screen state, workload and ambient conditions:
 
 | Metric | Normal charging | Charging separated |
 | --- | ---: | ---: |
@@ -92,53 +120,59 @@ USB cable, screen state, workload, and ambient conditions:
 | Direct-to-device proxy | 1.368 W | 1.422 W |
 | Battery temperature | 29.7 C | 29.7 C |
 
-The similar direct-to-device proxy is consistent with the device continuing to
-run from USB while the roughly 0.9 W charging component disappeared. The small
-negative separated current is also why the app says **charging separation**, not
-“perfect battery isolation.”
+The important part is the overall behavior: when charging separation was
+enabled, Android changed to **Not charging**, battery current dropped to roughly
+zero, and the handheld continued running with USB connected.
+
+The similar direct-to-device power estimate is consistent with USB continuing
+to supply the handheld while the charging component disappeared.
 
 > [!NOTE]
-> This is a short functional measurement, not a battery-health or longevity
-> study. Chargers, firmware, workload, temperature, and battery state can change
-> the numbers. See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for methodology and
-> sanitized raw samples.
+> This is a short functional test, not a battery-health or battery-longevity
+> study. Charger, workload, firmware, temperature and battery state can all
+> change the numbers. See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for the full
+> methodology and sanitized raw samples.
 
-## What the app protects against
+## Built-in safety checks
 
-- Verifies that the expected native limit controls are readable.
-- Uses the narrow Retroid Binder command instead of general-purpose root.
-- Reads the value back and requires Android to report `Not charging`.
-- Monitors USB input, battery current, charge counter, temperature, and an
-  estimated direct-to-device power figure.
-- Fails closed and restores normal charging if validation or telemetry fails.
-- Automatically disables after three consecutive samples where the battery
-  appears to be powering the device while separation is active.
-- Never changes CPU governors, frequencies, display composer settings, or
-  unrelated system properties.
+The app does more than simply flip a setting.
+
+Before and while charging separation is active, it:
+
+- checks that the expected Retroid charging controls are available;
+- verifies the new charging limit after changing it;
+- confirms Android reports `Not charging`;
+- monitors USB input, battery current, charge counter and temperature;
+- restores normal charging if validation or telemetry fails;
+- automatically disables separation after repeated samples indicating that the
+  battery may be powering the handheld instead of USB.
+
+It does **not** change CPU governors, CPU frequencies, display settings or
+unrelated Android system properties.
 
 ## Installation
 
 1. Download `Jesty-RP-Charging-Separation-1.3.0-dev.apk` from the
-   [GitHub release](https://github.com/SirJesty/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev).
+   [GitHub release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0-dev).
 2. Install and open **Jesty RP Charging Separation**.
-3. Connect a suitable USB charger and review the live telemetry.
+3. Connect a suitable USB charger.
 4. Enable **Charging separation**.
-5. Confirm `Not charging`, limit `10/10`, and sensible battery/USB readings.
+5. Confirm the app reports `Not charging` and sensible battery/USB readings.
 
 The public package is `com.jesty.rpchargingseparation`. It installs separately
 from private GracaBlockBat development builds created before the public rebrand.
 
-## Persistence and stopping behavior
+## Everyday behavior
 
 - While active or armed, the controller runs as an Android foreground service.
-- Closing the dashboard or removing it from recents does not normally stop that service.
-- **Restore after a normal reboot** is opt-in.
-- Disabling separation, a safety failure, or normal service destruction restores
-  charge limit `0`.
+- Closing the dashboard or removing it from recents does not normally stop it.
+- **Restore after a normal reboot** is optional.
+- Turning charging separation off restores normal charging.
+- A safety failure also restores normal charging automatically.
 
-**Android Settings -> Force stop is different.** Force stop prevents the app
-and its boot receiver from running again until the user opens the app. Do not
-use Force stop as a normal way to leave charging separation enabled.
+**Android Settings -> Force stop is different.** Force stop prevents the app and
+its boot receiver from running again until the app is opened manually. Do not
+use Force stop as the normal way to leave charging separation enabled.
 
 <details>
 <summary><strong>Technical implementation</strong></summary>
@@ -149,7 +183,8 @@ runs a narrowly scoped command through Retroid's privileged `pservice` path.
 
 Before reporting success, the app verifies the control node, reads back the
 limit, checks Android's battery status, and starts continuous safety telemetry.
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the protocol, state machine,
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the protocol, state machine
 and failure behavior.
 
 </details>
@@ -169,10 +204,20 @@ passwords, APKs, device captures, and local SDK paths do not belong in Git.
 
 </details>
 
-## Support the project
+## Support and contribute
 
-If this makes long Retroid sessions easier, a coffee helps fund device testing,
-safety work, documentation, and future compatibility updates.
+**Jesty RP Charging Separation is free and open source.**
+
+If the project is useful to you, there are several ways you can help:
+
+- ⭐ **Star the repository** so other Retroid owners can find it.
+- 🧪 **Test another firmware or compatible Retroid device** and share carefully redacted results.
+- 🐛 **Report bugs or compatibility issues.**
+- 💡 **Suggest improvements** or contribute code/documentation.
+- ☕ **[Buy me a coffee](https://www.buymeacoffee.com/jesty)** to help fund
+  additional device testing, safety work, firmware compatibility and future updates.
+
+Testing and compatibility reports are just as valuable as financial support.
 
 <p align="center">
   <a href="https://www.buymeacoffee.com/jesty">
@@ -180,9 +225,9 @@ safety work, documentation, and future compatibility updates.
   </a>
 </p>
 
-Please include the exact device, firmware, charger, and carefully redacted
-telemetry when reporting a compatibility issue. Never upload a keystore,
-password, device serial, account email, or unreviewed log bundle.
+When reporting a compatibility issue, please include the exact device, firmware,
+charger and carefully redacted telemetry. Never upload a keystore, password,
+device serial, account email or unreviewed log bundle.
 
 ## Documentation
 
