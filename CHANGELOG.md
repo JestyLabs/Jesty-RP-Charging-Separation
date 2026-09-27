@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.1
+
+- Clarified that compatibility is capability-based rather than restricted to
+  a Flip 2 or RP5 model-name allowlist.
+- Added the Android device model to the live diagnostic line so Pocket Mini V2
+  test results can be identified without publishing device serials.
+- Made unsupported-device errors name the exact native charging-control node
+  that is missing.
+- Added the Retroid Pocket Mini V2 as a candidate device pending validation on
+  the exact downloadable APK; charging control and safety fallback are
+  unchanged.
+
 ## 1.4.0
 
 - Added the final transparent Jesty RP Charging Separation lockup to the app

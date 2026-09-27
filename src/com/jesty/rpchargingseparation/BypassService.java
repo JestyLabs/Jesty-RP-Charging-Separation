@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.IBinder;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.Locale;
@@ -185,9 +186,14 @@ public final class BypassService extends Service {
     private void requireSupportedDevice() {
         java.io.File limit = new java.io.File(PowerTelemetry.LIMIT);
         java.io.File maximum = new java.io.File(PowerTelemetry.LIMIT_MAX);
-        if (!limit.isFile() || !maximum.isFile() || !limit.canRead() || !maximum.canRead()) {
-            throw new IllegalStateException("Native charging separation is unavailable");
+        StringBuilder missing = new StringBuilder();
+        if (!limit.isFile() || !limit.canRead()) missing.append("charge_control_limit");
+        if (!maximum.isFile() || !maximum.canRead()) {
+            if (missing.length() > 0) missing.append(", ");
+            missing.append("charge_control_limit_max");
         }
+        if (missing.length() > 0) throw new IllegalStateException(
+                "Unsupported on " + Build.MODEL + ": missing " + missing);
     }
 
     private Notification notification(String text) {

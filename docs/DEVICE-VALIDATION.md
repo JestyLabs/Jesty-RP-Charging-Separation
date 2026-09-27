@@ -16,3 +16,19 @@ ambient conditions. Redact serial numbers and account information.
 - [ ] Reboot with boot restoration ON reconciles correctly after USB is present.
 - [ ] Force stop behavior and recovery after opening the app are documented.
 - [ ] The device charges normally after all tests.
+
+## Pocket Mini V2 1.4.1 compatibility check
+
+Status: pending an owner test of the exact signed 1.4.1 APK.
+
+- [ ] Diagnostic line identifies the Pocket Mini V2 model.
+- [ ] App reads `charge_control_limit` and `charge_control_limit_max`.
+- [ ] Enabling reaches `CHARGING SEPARATED`, `Not charging`, and matching
+  current/maximum limit values while USB input remains above zero.
+- [ ] Battery flow remains near neutral rather than sustaining discharge.
+- [ ] Unplug/replug returns to the armed state and re-enables safely.
+- [ ] Disabling restores limit `0` and normal `Charging` behavior.
+- [ ] A normal reboot with restore disabled leaves normal charging active.
+
+Do not mark the Mini V2 as validated from chipset similarity or a successful
+install alone; the charging state, power flow, and restoration checks must pass.

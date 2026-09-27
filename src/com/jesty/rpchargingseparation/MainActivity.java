@@ -389,8 +389,8 @@ public final class MainActivity extends Activity {
                 telemetry.estimatedDeviceWatts()));
         tempValue.setText(String.format(Locale.US, "%.1f C", telemetry.temperatureC));
         diagnostic.setText(String.format(Locale.US,
-                "%s%s | %s | limit %d/%d | counter %d uAh",
-                telemetry.usbType, telemetry.pdActive ? " / PD" : "",
+                "%s | %s%s | %s | limit %d/%d | counter %d uAh",
+                Build.MODEL, telemetry.usbType, telemetry.pdActive ? " / PD" : "",
                 telemetry.batteryStatus, telemetry.limit, telemetry.limitMax,
                 telemetry.chargeCounterUah));
     }

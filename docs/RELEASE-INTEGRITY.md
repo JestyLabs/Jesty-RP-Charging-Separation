@@ -47,3 +47,22 @@ The signed 1.4.0 APK was installed in place on the physical Retroid Pocket
 Flip 2 and its package identity was confirmed. The charging-control path is
 unchanged from 1.3.0. The final rebuild differs from the exercised 1.4.0
 candidate only in header/badge presentation and disclosure copy.
+
+## 1.4.1 Pocket Mini V2 compatibility candidate
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `16`
+- Version name: `1.4.1`
+- Debuggable: `false`
+- APK: `Jesty-RP-Charging-Separation-1.4.1.apk`
+- Signed APK SHA-256:
+  `B1F9D3D5461615CC90E70219C8355C1721B041588FE1D71D94BAD97B18ADACD0`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The clean build and signature verification passed. The compatibility gate is
+capability-based and the safety/control path is unchanged from 1.4.0. This
+exact APK has not yet been exercised on a physical Pocket Mini V2, so the
+release remains a pre-release until an owner confirms the native nodes,
+`Not charging` state, USB input, and safe restoration to normal charging.

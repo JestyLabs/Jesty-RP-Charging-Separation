@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.0"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.1"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -22,6 +22,7 @@
 <p align="center">
   <img alt="Retroid Pocket Flip 2" src="https://img.shields.io/badge/validated-Flip%202-7C3AED?style=for-the-badge">
   <img alt="Retroid Pocket 5" src="https://img.shields.io/badge/reported-RP5-F59E0B?style=for-the-badge">
+  <img alt="Retroid Pocket Mini V2" src="https://img.shields.io/badge/candidate-Mini%20V2-F59E0B?style=for-the-badge">
   <img alt="Android 13" src="https://img.shields.io/badge/Android-13-3DDC84?style=for-the-badge&amp;logo=android&amp;logoColor=white">
   <img alt="No Magisk or rooting" src="https://img.shields.io/badge/setup-no%20Magisk%20%2F%20rooting-16A34A?style=for-the-badge">
   <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
@@ -94,12 +95,14 @@ connected and continued supplying the handheld.
 | --- | --- |
 | **Retroid Pocket Flip 2** | Exact public APK installed, measured, and validated |
 | **Retroid Pocket 5** | Reported working; sanitized repeat telemetry is still pending |
+| **Retroid Pocket Mini V2** | Capability-compatible candidate; exact-device validation pending |
 | Other Retroid models | Not validated — treat as unsupported until tested |
 | Unrelated Android devices | Unsupported |
 
-Before enabling separation, the app checks that the required Retroid control
-nodes and privileged bridge are available. A similar device name is not treated
-as proof of compatibility.
+Compatibility is based on the required Retroid control nodes and privileged
+bridge, not a model-name allowlist. Before enabling separation, the app checks
+those capabilities and validates the resulting hardware state. A similar
+chipset or device name is not treated as proof of successful operation.
 
 ## Safety behavior
 
@@ -114,8 +117,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.4.0.apk` from the
-   [latest release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.0).
+1. Download `Jesty-RP-Charging-Separation-1.4.1.apk` from the
+   [latest test release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.1).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Charging Separation** and confirm `Not charging`.
