@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.1"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.2"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -93,7 +93,7 @@ connected and continued supplying the handheld.
 
 | Device | Evidence |
 | --- | --- |
-| **Retroid Pocket Flip 2** | Exact public APK installed, measured, and validated |
+| **Retroid Pocket Flip 2** | Charging behavior measured and validated; the icon-only 1.4.2 rebuild was not reinstalled in this release round |
 | **Retroid Pocket 5** | Reported working; sanitized repeat telemetry is still pending |
 | **Retroid Pocket Mini V2** | Capability-compatible candidate; exact-device validation pending |
 | Other Retroid models | Not validated — treat as unsupported until tested |
@@ -117,8 +117,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.4.1.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.1).
+1. Download `Jesty-RP-Charging-Separation-1.4.2.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.2).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Charging Separation** and confirm `Not charging`.

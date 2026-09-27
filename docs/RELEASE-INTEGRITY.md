@@ -66,3 +66,21 @@ capability-based and the safety/control path is unchanged from 1.4.0. This
 exact APK has not yet been exercised on a physical Pocket Mini V2, so Mini V2
 support remains a candidate until an owner confirms the native nodes,
 `Not charging` state, USB input, and safe restoration to normal charging.
+
+## Stable 1.4.2 launcher-icon refresh
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `17`
+- Version name: `1.4.2`
+- Debuggable: `false`
+- APK: `Jesty-RP-Charging-Separation-1.4.2.apk`
+- Signed APK SHA-256:
+  `64A48CF53122065B8B4EA0D686EEB0B7AC91938C517C3B4D1EAC82A381660C08`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The release changes only the launcher vector and version metadata. The
+notification icon and all charging, monitoring, safety, and boot code are
+unchanged from 1.4.1. The exact signed APK passed static artifact validation but
+was not installed on the physical Flip 2 during this release round.

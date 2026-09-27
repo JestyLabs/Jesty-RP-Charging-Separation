@@ -32,3 +32,16 @@ Status: pending an owner test of the exact signed 1.4.1 APK.
 
 Do not mark the Mini V2 as validated from chipset similarity or a successful
 install alone; the charging state, power flow, and restoration checks must pass.
+
+## 1.4.2 launcher-icon release
+
+The signed 1.4.2 artifact was built from the reviewed public tree and passed
+package, version, alignment, resource, and signature verification. This release
+changes only the launcher vector and version metadata. The notification icon,
+charging-control code, safety state machine, monitoring, and boot behavior are
+byte-for-byte unchanged from 1.4.1.
+
+The exact 1.4.2 APK was not installed on the physical Flip 2 during this release
+round. Existing Flip 2 charging validation therefore remains functional evidence
+for the unchanged control path, not a claim that the new launcher icon was
+visually checked on-device.

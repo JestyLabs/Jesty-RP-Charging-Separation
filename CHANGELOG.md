@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.2
+
+- Replaced the irregular launcher bolt with a simple centered yellow bolt on a
+  solid purple circular background.
+- Preserved the notification icon, dashboard artwork, charging controls,
+  monitoring, safety fallback, and boot behavior unchanged.
+- Bumped the stable update to versionCode 17 / versionName 1.4.2.
+
 ## 1.4.1
 
 - Clarified that compatibility is capability-based rather than restricted to
