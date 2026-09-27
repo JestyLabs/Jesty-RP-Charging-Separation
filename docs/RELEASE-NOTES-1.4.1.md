@@ -1,6 +1,6 @@
 # Jesty RP Charging Separation 1.4.1
 
-This compatibility pre-release makes the existing capability-based device
+This stable compatibility release makes the existing capability-based device
 support explicit for Retroid Pocket Mini V2 testing.
 
 ## What changed

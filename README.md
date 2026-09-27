@@ -118,7 +118,7 @@ Before and while separation is active, the controller:
 ## Install and forget
 
 1. Download `Jesty-RP-Charging-Separation-1.4.1.apk` from the
-   [latest test release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.1).
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.1).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Charging Separation** and confirm `Not charging`.

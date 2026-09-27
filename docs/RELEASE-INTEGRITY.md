@@ -48,7 +48,7 @@ Flip 2 and its package identity was confirmed. The charging-control path is
 unchanged from 1.3.0. The final rebuild differs from the exercised 1.4.0
 candidate only in header/badge presentation and disclosure copy.
 
-## 1.4.1 Pocket Mini V2 compatibility candidate
+## Stable 1.4.1 Pocket Mini V2 compatibility candidate
 
 - Package: `com.jesty.rpchargingseparation`
 - Version code: `16`
@@ -63,6 +63,6 @@ candidate only in header/badge presentation and disclosure copy.
 
 The clean build and signature verification passed. The compatibility gate is
 capability-based and the safety/control path is unchanged from 1.4.0. This
-exact APK has not yet been exercised on a physical Pocket Mini V2, so the
-release remains a pre-release until an owner confirms the native nodes,
+exact APK has not yet been exercised on a physical Pocket Mini V2, so Mini V2
+support remains a candidate until an owner confirms the native nodes,
 `Not charging` state, USB input, and safe restoration to normal charging.
