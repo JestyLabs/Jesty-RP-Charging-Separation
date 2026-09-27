@@ -29,3 +29,21 @@ available.
    version code, and version name.
 5. Complete real-device validation with that exact signed APK.
 6. Attach the APK to a GitHub Release; do not commit it to Git history.
+
+## Stable 1.4.0 release
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `15`
+- Version name: `1.4.0`
+- Debuggable: `false`
+- APK: `Jesty-RP-Charging-Separation-1.4.0.apk`
+- Signed APK SHA-256:
+  `D7D1B598CDB12E5CCDA3CE2E90A5E8C1CA5BFB9AFC578567DFEFA1FF3447BF58`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The signed 1.4.0 APK was installed in place on the physical Retroid Pocket
+Flip 2 and its package identity was confirmed. The charging-control path is
+unchanged from 1.3.0. The final rebuild differs from the exercised 1.4.0
+candidate only in header/badge presentation and disclosure copy.

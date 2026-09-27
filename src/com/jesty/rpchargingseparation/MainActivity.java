@@ -117,6 +117,18 @@ public final class MainActivity extends Activity {
         root.addView(scroll, new FrameLayout.LayoutParams(
                 panelWidth, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START));
 
+        LinearLayout topActions = buildTopActions();
+        FrameLayout.LayoutParams actionParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(42), Gravity.TOP | Gravity.END);
+        actionParams.setMargins(0, dp(16), dp(18), 0);
+        root.addView(topActions, actionParams);
+
+        LinearLayout openSourceBadge = buildOpenSourceBadge();
+        FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(50), Gravity.BOTTOM | Gravity.END);
+        badgeParams.setMargins(0, 0, dp(18), dp(16));
+        root.addView(openSourceBadge, badgeParams);
+
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int horizontal = dp(24);
@@ -174,52 +186,78 @@ public final class MainActivity extends Activity {
                 10f, Color.rgb(151, 143, 170), false);
         legend.setPadding(dp(4), dp(4), 0, 0);
         content.addView(legend);
-        content.addView(buildSupportFooter());
         return root;
     }
 
     private View buildHeader() {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
         ImageView lockup = new ImageView(this);
         lockup.setImageResource(R.drawable.jesty_rp_header_lockup);
         lockup.setScaleType(ImageView.ScaleType.FIT_START);
         lockup.setAdjustViewBounds(true);
         lockup.setContentDescription("Jesty RP Charging Separation");
-        header.addView(lockup, new LinearLayout.LayoutParams(dp(300), dp(76)));
+        header.addView(lockup, new LinearLayout.LayoutParams(dp(300), dp(100)));
 
-        header.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(78)));
+        header.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(102)));
         return header;
     }
 
-    private View buildSupportFooter() {
-        LinearLayout footer = panel();
-        TextView title = text("JESTY APPS ARE FREE & OPEN SOURCE", 10f, MUTED, true);
-        title.setLetterSpacing(0.07f);
-        footer.addView(title);
-        TextView copy = text("Support device testing or star the project.", 11f, Color.WHITE, false);
-        copy.setPadding(0, dp(3), 0, dp(4));
-        footer.addView(copy);
+    private LinearLayout buildTopActions() {
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
 
-        LinearLayout links = row();
-        TextView support = footerLink("☕  SUPPORT JESTY");
+        TextView support = topAction("\u2615  SUPPORT");
         support.setOnClickListener(v -> openExternal("https://buymeacoffee.com/jesty"));
-        links.addView(support, new LinearLayout.LayoutParams(0, dp(34), 1f));
-        TextView github = footerLink("★  STAR ON GITHUB");
+        actions.addView(support);
+
+        TextView github = topAction("\u2605  GITHUB");
         github.setOnClickListener(v -> openExternal(
                 "https://github.com/JestyLabs/Jesty-RP-Charging-Separation"));
-        links.addView(github, new LinearLayout.LayoutParams(0, dp(34), 1f));
-        footer.addView(links);
-        return footer;
+        LinearLayout.LayoutParams githubParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(38));
+        githubParams.setMargins(dp(8), 0, 0, 0);
+        actions.addView(github, githubParams);
+        return actions;
     }
 
-    private TextView footerLink(String label) {
-        TextView link = text(label, 10f, YELLOW, true);
-        link.setGravity(Gravity.CENTER_VERTICAL);
-        link.setPadding(dp(4), 0, dp(4), 0);
-        return link;
+    private TextView topAction(String label) {
+        TextView action = text(label, 10f, YELLOW, true);
+        action.setGravity(Gravity.CENTER);
+        action.setPadding(dp(14), 0, dp(14), 0);
+        GradientDrawable bubble = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{0xE0241338, 0xE0441B55});
+        bubble.setCornerRadius(dp(21));
+        bubble.setStroke(dp(1), 0xCCB15BFF);
+        action.setBackground(bubble);
+        action.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(38)));
+        return action;
+    }
+
+    private LinearLayout buildOpenSourceBadge() {
+        LinearLayout badge = new LinearLayout(this);
+        badge.setOrientation(LinearLayout.VERTICAL);
+        badge.setGravity(Gravity.CENTER);
+        badge.setPadding(dp(16), dp(5), dp(16), dp(5));
+        TextView copy = text("Support device testing or star the project.", 8f,
+                Color.rgb(205, 196, 218), false);
+        copy.setGravity(Gravity.CENTER);
+        badge.addView(copy);
+        TextView title = text("JESTY APPS ARE FREE & OPEN SOURCE", 9f, YELLOW, true);
+        title.setGravity(Gravity.CENTER);
+        title.setLetterSpacing(0.05f);
+        badge.addView(title);
+        GradientDrawable bubble = new GradientDrawable();
+        bubble.setColor(0xB5100B19);
+        bubble.setCornerRadius(dp(25));
+        bubble.setStroke(dp(1), 0x667B4AE2);
+        badge.setBackground(bubble);
+        return badge;
     }
 
     private void openExternal(String url) {

@@ -32,3 +32,18 @@
 
 No pending item should be described as passed until a real-device run records
 the final state.
+
+## 1.4.0 artwork and dashboard candidate
+
+- Installed in place on the physical Retroid Pocket Flip 2 as
+  `versionCode=15`, `versionName=1.4.0`.
+- Normal charging showed positive battery flow and `Charging`.
+- Enabling separation changed Android to `Not charging`, with battery flow
+  approximately neutral while USB continued powering the device.
+- Disabling restored normal charging.
+- Swiping the app itself away from Recents kept the controller active.
+- The vendor **Clear all** action behaved like an Android force-stop on this
+  firmware and stopped the service; reopening the app allows it to start again.
+- The final signed rebuild only changes alignment, corner copy, and disclosure
+  text. Package identity was rechecked after installation; the full hardware
+  sequence was not repeated for those presentation-only changes.

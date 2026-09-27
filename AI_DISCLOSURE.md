@@ -1,12 +1,12 @@
 # AI assistance disclosure
 
 This project was created with substantial generative-AI assistance under the
-maintainer's direction.
+maintainer's direction and supervision.
 
 AI tools helped draft and refine portions of the source code, build scripts,
 documentation, UI copy, visual concepts, and asset-processing workflow. The
-maintainer selected the behavior, reviewed the resulting files, and is
-responsible for release decisions.
+maintainer selected the behavior, supervised each iteration, reviewed the
+resulting code and visual output, and is responsible for release decisions.
 
 AI-generated output is not evidence that a privileged charging change is safe,
 compatible, or effective. Hardware claims in this repository must be backed by

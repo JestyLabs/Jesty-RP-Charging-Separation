@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.0"><strong>Download APK</strong></a>
   · <a href="#what-does-it-do">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements and raw data</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -182,8 +182,8 @@ unrelated Android system properties.
 
 ## Installation
 
-1. Download `Jesty-RP-Charging-Separation-1.3.0.apk` from the
-   [GitHub release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.3.0).
+1. Download `Jesty-RP-Charging-Separation-1.4.0.apk` from the
+   [GitHub release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.0).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Charging Separation**.
@@ -293,5 +293,7 @@ device serial, account email or unreviewed log bundle.
 - Jesty name, mascot, wordmark, and project artwork: [ASSETS-LICENSE.md](ASSETS-LICENSE.md).
 - Third-party Android and Retroid names: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-This project is not affiliated with or endorsed by Retroid. It was developed
-with disclosed generative-AI assistance under the maintainer's direction.
+This project is not affiliated with or endorsed by Retroid. Code,
+documentation, and visual assets were developed with disclosed generative-AI
+assistance under the maintainer's direction, supervision, review, and final
+approval.
