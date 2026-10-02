@@ -13,6 +13,12 @@ public final class ChargeLimitPolicyTest {
     }
 
     public static void main(String[] args) {
+        if (ChargeLimitPolicy.migrateResumeMargin(80, 10) != 70
+                || ChargeLimitPolicy.migrateResumeMargin(30, 20) != 10
+                || ChargeLimitPolicy.migrateResumeMargin(80, 1) != 75
+                || ChargeLimitPolicy.clampResumePercent(79, 80) != 75) {
+            throw new AssertionError("Resume-level migration or minimum gap is wrong");
+        }
         expect(false, false, 50, 80, 70, false);
         expect(true, true, 69, 80, 70, false);
         expect(true, true, 70, 80, 70, false);

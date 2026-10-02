@@ -9,12 +9,11 @@
 
 <p align="center">
   <strong>No Magisk. No terminal. No need to keep the app open.</strong><br>
-  Install it, enable Charging Separation, and forget about it.
+  Install it, enable Bypass charging, and forget about it.
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.2"><strong>Download APK</strong></a>
-  · <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.0-rc1">Test automatic limit (pre-release)</a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.0"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -29,10 +28,6 @@
   <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
 </p>
 
-<p align="center">
-  <img src="docs/images/dashboard-separated.png" alt="Jesty RP Charging Separation active on Retroid Pocket Flip 2" width="100%">
-</p>
-
 ## What the app does
 
 Normally, USB powers the handheld and charges its battery at the same time.
@@ -42,11 +37,10 @@ running device.
 
 - No user-managed root, Magisk, Termux, or ADB setup.
 - Live battery current, USB input, direct-to-device estimate, and temperature.
-- **Immediate** or **Automatic limit** mode: separate right away, or charge to
-  a configurable limit (80% by default) and resume charging after a
-  configurable drop (10 points by default, e.g. separate at 80%, resume at 70%).
-  Automatic limit is available in the 1.5.0-rc1 testing pre-release; 1.4.2 is
-  the latest stable release.
+- **Right away** or **At a battery level**: stop active charging immediately,
+  or charge to a chosen level (80% by default) and charge again at a second
+  chosen level (70% by default). The charge-again level stays at least five
+  percentage points below the stop level.
 - Verifies that separation actually activated before reporting success.
 - Restores normal charging if validation or safety telemetry fails.
 - Optional restore after a normal reboot.
@@ -67,10 +61,6 @@ depending on load, charger, firmware, temperature, and battery state.
 | Live safety monitoring | — | **Yes** |
 | App must stay open | — | **No** |
 | Root/Magisk setup | — | **No** |
-
-| Charging separated | Normal charging |
-| --- | --- |
-| ![Charging separated dashboard](docs/images/dashboard-separated.png) | ![Normal charging dashboard](docs/images/dashboard-normal.png) |
 
 ## Measured on Retroid Pocket Flip 2
 
@@ -99,8 +89,8 @@ connected and continued supplying the handheld.
 
 | Device | Evidence |
 | --- | --- |
-| **Retroid Pocket Flip 2** | Charging behavior measured and validated; the icon-only 1.4.2 rebuild was not reinstalled in this release round |
-| **Retroid Pocket 5** | Reported working; sanitized repeat telemetry is still pending |
+| **Retroid Pocket Flip 2** | Charging behavior measured on earlier versions; the exact 1.5.0 APK and redesigned screen have not yet been tested on device |
+| **Retroid Pocket 5** | Earlier build reported working; 1.5.0 and sanitized repeat telemetry are still pending |
 | **Retroid Pocket Mini V2** | Capability-compatible candidate; exact-device validation pending |
 | Other Retroid models | Not validated — treat as unsupported until tested |
 | Unrelated Android devices | Unsupported |
@@ -123,12 +113,12 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.4.2.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.2).
+1. Download `Jesty-RP-Charging-Separation-1.5.0.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.0).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
-4. Enable **Charging Separation** and confirm `Not charging`.
-5. Enable **Restore after a normal reboot** only if you want that behavior.
+4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.
+5. Enable **Turn on again after restart** only if you want that behavior.
 
 After that, the dashboard can be closed and the app can be individually swiped
 away from Recents while the foreground controller continues monitoring the

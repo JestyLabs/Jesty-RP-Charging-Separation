@@ -29,18 +29,20 @@ public final class BypassService extends Service {
     static final String MODE_IMMEDIATE = "immediate";
     static final String MODE_AUTO_LIMIT = "auto_limit";
     static final String PREF_LIMIT_PERCENT = "limit_percent";
-    static final String PREF_RESUME_MARGIN = "resume_margin";
+    static final String PREF_RESUME_PERCENT = "resume_percent";
+    // Pre-release builds stored a margin instead of an absolute resume level.
+    private static final String LEGACY_PREF_RESUME_MARGIN = "resume_margin";
     static final int DEFAULT_LIMIT_PERCENT = 80;
-    static final int DEFAULT_RESUME_MARGIN = 10;
+    static final int DEFAULT_RESUME_PERCENT = 70;
     static final int MIN_LIMIT_PERCENT = 30;
     static final int MAX_LIMIT_PERCENT = 100;
-    static final int MIN_RESUME_MARGIN = 1;
-    static final int MAX_RESUME_MARGIN = 20;
+    static final int MIN_RESUME_PERCENT = ChargeLimitPolicy.MIN_RESUME_PERCENT;
+    static final int MIN_RESUME_GAP = ChargeLimitPolicy.MIN_RESUME_GAP;
 
     enum State { OFF, ARMED, ENABLING, ACTIVE, CHARGING_TO_LIMIT, FAILED }
 
     private static volatile State state = State.OFF;
-    private static volatile String detail = "Normal charging";
+    private static volatile String detail = "Bypass charging is off";
 
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     private ScheduledExecutorService worker;
@@ -62,16 +64,27 @@ public final class BypassService extends Service {
                 MIN_LIMIT_PERCENT, MAX_LIMIT_PERCENT);
     }
 
-    static int resumeMargin(SharedPreferences prefs) {
-        return clamp(prefs.getInt(PREF_RESUME_MARGIN, DEFAULT_RESUME_MARGIN),
-                MIN_RESUME_MARGIN, MAX_RESUME_MARGIN);
-    }
-
     static int resumePercent(SharedPreferences prefs) {
-        return Math.max(0, limitPercent(prefs) - resumeMargin(prefs));
+        int limit = limitPercent(prefs);
+        int stored;
+        if (prefs.contains(PREF_RESUME_PERCENT)) {
+            stored = prefs.getInt(PREF_RESUME_PERCENT, DEFAULT_RESUME_PERCENT);
+        } else if (prefs.contains(LEGACY_PREF_RESUME_MARGIN)) {
+            stored = ChargeLimitPolicy.migrateResumeMargin(
+                    limit, prefs.getInt(LEGACY_PREF_RESUME_MARGIN, 10));
+            prefs.edit().putInt(PREF_RESUME_PERCENT, stored)
+                    .remove(LEGACY_PREF_RESUME_MARGIN).apply();
+        } else {
+            stored = DEFAULT_RESUME_PERCENT;
+        }
+        return clampResumePercent(stored, limit);
     }
 
-    private static int clamp(int value, int min, int max) {
+    static int clampResumePercent(int resume, int limit) {
+        return ChargeLimitPolicy.clampResumePercent(resume, limit);
+    }
+
+    static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
 
@@ -90,12 +103,12 @@ public final class BypassService extends Service {
                 : intent.getAction();
         if (ACTION_ENABLE.equals(action)) {
             state = State.ENABLING;
-            detail = "Validating native charging separation...";
+            detail = "Checking hardware...";
             startForeground(NOTIFICATION_ID, notification(detail));
             worker.execute(this::enableSafely);
         } else {
             startForeground(NOTIFICATION_ID, notification("Restoring normal charging..."));
-            worker.execute(() -> disableSafely("Disabled by user", true));
+            worker.execute(() -> disableSafely("Bypass charging is off", true));
         }
         return START_STICKY;
     }
@@ -107,7 +120,7 @@ public final class BypassService extends Service {
             PowerTelemetry before = PowerTelemetry.read();
             if (!before.usbPresent) {
                 state = State.ARMED;
-                detail = "Armed - waiting for USB/PD";
+                detail = "Plug in USB to start";
                 updateNotification(detail);
                 ensureMonitor();
                 return;
@@ -136,9 +149,9 @@ public final class BypassService extends Service {
             limitReached = autoLimitMode(prefs);
             detail = autoLimitMode(prefs)
                     ? String.format(Locale.US,
-                            "Separated at %d%% - charging resumes at %d%%",
+                            "Stopped at %d%% - charges again at %d%%",
                             limitPercent(prefs), resumePercent(prefs))
-                    : "Charging separation active and validated";
+                    : "Battery is not charging";
             updateNotification(detail);
             ensureMonitor();
         } catch (Throwable error) {
@@ -168,8 +181,8 @@ public final class BypassService extends Service {
 
     private void updateLimitChargingDetail(PowerTelemetry telemetry) {
         detail = String.format(Locale.US,
-                "Auto limit - charging %d%% -> %d%% (resumes at %d%%)",
-                telemetry.batteryPercent, limitPercent(prefs), resumePercent(prefs));
+                "Will stop at %d%% (now %d%%)",
+                limitPercent(prefs), telemetry.batteryPercent);
         updateNotification(detail);
     }
 
@@ -179,7 +192,7 @@ public final class BypassService extends Service {
             PowerTelemetry telemetry = PowerTelemetry.read();
             boolean desired = prefs.getBoolean("desired_enabled", false);
             if (!desired) {
-                disableSafely("Disabled by user", true);
+                disableSafely("Bypass charging is off", true);
                 return;
             }
             if (state == State.ARMED) {
@@ -189,7 +202,7 @@ public final class BypassService extends Service {
             if (state == State.CHARGING_TO_LIMIT) {
                 if (!telemetry.usbPresent) {
                     state = State.ARMED;
-                    detail = "Armed - waiting for USB/PD";
+                    detail = "Plug in USB to start";
                     updateNotification(detail);
                     return;
                 }
@@ -204,7 +217,7 @@ public final class BypassService extends Service {
             if (state != State.ACTIVE) return;
             if (!telemetry.usbPresent) {
                 state = State.ARMED;
-                detail = "Armed - waiting for USB/PD";
+                detail = "Plug in USB to start";
                 updateNotification(detail);
                 return;
             }
@@ -230,14 +243,19 @@ public final class BypassService extends Service {
 
             detail = autoLimitMode(prefs)
                     ? String.format(Locale.US,
-                            "Separated at %d%% - resumes at %d%% - USB %.1f W",
+                            "Stopped at %d%% - charges again at %d%% - USB %.1f W",
                             limitPercent(prefs), resumePercent(prefs), telemetry.usbWatts())
                     : String.format(Locale.US,
-                            "Separated - USB %.1f W - Battery %+.0f mA",
-                            telemetry.usbWatts(), telemetry.displayedBatteryCurrentUa() / 1000d);
+                            "Battery is not charging - USB %.1f W",
+                            telemetry.usbWatts());
             updateNotification(detail);
         } catch (Throwable error) {
+            Log.e(TAG, "Monitoring failed", error);
             disableSafely("Telemetry error", true);
+            if (state == State.OFF) {
+                state = State.FAILED;
+                detail = "Telemetry error";
+            }
         }
     }
 
@@ -314,8 +332,8 @@ public final class BypassService extends Service {
 
     private void createChannel() {
         NotificationChannel channel = new NotificationChannel(CHANNEL,
-                "Charging separation", NotificationManager.IMPORTANCE_LOW);
-        channel.setDescription("Retroid native charging-separation state");
+                "Bypass charging", NotificationManager.IMPORTANCE_LOW);
+        channel.setDescription("Bypass charging state");
         channel.enableLights(false);
         channel.setLightColor(Color.YELLOW);
         getSystemService(NotificationManager.class).createNotificationChannel(channel);

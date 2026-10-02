@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0
+
+- Redesigned the dashboard with a centered logo, live panel, clearer status
+  wording, and numeric stop/charge-again controls.
+- Stores an absolute charge-again level (70% by default) at least five
+  percentage points below the stop level (80% by default).
+- Migrates the resume margin saved by 1.5.0-rc1 to the equivalent absolute
+  level without clearing the user's other settings.
+- Increased versionCode to 19 so installations of 1.5.0-rc1 can update in
+  place.
+
 ## 1.5.0-rc1 (pre-release)
 
 - Added **Immediate** and **Automatic limit** separation modes. Automatic limit

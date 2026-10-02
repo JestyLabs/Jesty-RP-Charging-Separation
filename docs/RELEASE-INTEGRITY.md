@@ -101,3 +101,19 @@ The signed APK passed build, package, alignment, and signature checks. The
 automatic-limit cycle remains unverified on a physical Retroid device; this
 artifact is a pre-release and must not be promoted to stable until that test
 uses this exact APK.
+
+## 1.5.0 UI and absolute charge-again level
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `19`
+- Version name: `1.5.0`
+- APK: `Jesty-RP-Charging-Separation-1.5.0.apk`
+- Signed APK SHA-256:
+  `11A12BC9F6EE3F10C8B72B7FE3E7DC1BD4FBFABF304E86177E19EC2E543EA299`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The exact APK passed static build and signature checks. No Retroid was connected
+for the 1.5.0 build, so the new layout and charge/resume cycle remain pending
+physical validation.
