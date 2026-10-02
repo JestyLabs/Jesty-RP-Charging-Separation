@@ -29,6 +29,9 @@
   <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
 </p>
 
+<img width="1920" height="1080" alt="Screenshot (Oct 2, 2026 2_31_41 PM)" src="https://github.com/user-attachments/assets/0e4346b9-dc09-4348-b414-1398aeac9f4b" />
+
+
 ## What the app does
 
 Normally, USB powers the handheld and charges its battery at the same time.
