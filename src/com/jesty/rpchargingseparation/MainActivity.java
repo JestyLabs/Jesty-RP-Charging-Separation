@@ -2,6 +2,7 @@ package com.jesty.rpchargingseparation;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -16,7 +17,10 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +41,13 @@ public final class MainActivity extends Activity {
     private boolean suppressToggle;
     private Switch separationToggle;
     private Switch autoBootToggle;
+    private RadioButton immediateMode;
+    private RadioButton autoLimitMode;
+    private LinearLayout autoLimitSettings;
+    private TextView limitLabel;
+    private TextView marginLabel;
+    private SeekBar limitSeek;
+    private SeekBar marginSeek;
     private TextView stateText;
     private TextView stateDetail;
     private TextView batteryValue;
@@ -66,6 +77,7 @@ public final class MainActivity extends Activity {
         autoBootToggle.setOnCheckedChangeListener((button, checked) ->
                 getSharedPreferences("state", MODE_PRIVATE).edit()
                         .putBoolean("auto_on_boot", checked).apply());
+        bindModeSettings();
 
         separationToggle.setOnCheckedChangeListener((button, checked) -> {
             if (suppressToggle) return;
@@ -166,6 +178,7 @@ public final class MainActivity extends Activity {
         switchPanel.addView(autoBootToggle, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(42)));
         content.addView(switchPanel);
+        content.addView(buildModePanel());
 
         LinearLayout row1 = row();
         batteryValue = addCard(row1, "BATTERY FLOW", "-");
@@ -187,6 +200,121 @@ public final class MainActivity extends Activity {
         legend.setPadding(dp(4), dp(4), 0, 0);
         content.addView(legend);
         return root;
+    }
+
+    private View buildModePanel() {
+        LinearLayout modePanel = panel();
+        modePanel.setPadding(dp(14), dp(8), dp(14), dp(8));
+
+        TextView heading = text("SEPARATION MODE", 11f, MUTED, true);
+        heading.setLetterSpacing(0.06f);
+        modePanel.addView(heading);
+
+        RadioGroup modes = new RadioGroup(this);
+        modes.setOrientation(RadioGroup.HORIZONTAL);
+        immediateMode = modeOption("Immediate");
+        autoLimitMode = modeOption("Automatic limit");
+        modes.addView(immediateMode, new RadioGroup.LayoutParams(
+                0, dp(40), 1f));
+        modes.addView(autoLimitMode, new RadioGroup.LayoutParams(
+                0, dp(40), 1f));
+        modePanel.addView(modes);
+
+        autoLimitSettings = new LinearLayout(this);
+        autoLimitSettings.setOrientation(LinearLayout.VERTICAL);
+        limitLabel = text("", 13f, Color.WHITE, false);
+        limitLabel.setPadding(0, dp(4), 0, 0);
+        autoLimitSettings.addView(limitLabel);
+        limitSeek = new SeekBar(this);
+        limitSeek.setMin(BypassService.MIN_LIMIT_PERCENT);
+        limitSeek.setMax(BypassService.MAX_LIMIT_PERCENT);
+        applyBrandSeekColors(limitSeek);
+        autoLimitSettings.addView(limitSeek, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(36)));
+
+        marginLabel = text("", 13f, Color.WHITE, false);
+        autoLimitSettings.addView(marginLabel);
+        marginSeek = new SeekBar(this);
+        marginSeek.setMin(BypassService.MIN_RESUME_MARGIN);
+        marginSeek.setMax(BypassService.MAX_RESUME_MARGIN);
+        applyBrandSeekColors(marginSeek);
+        autoLimitSettings.addView(marginSeek, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(36)));
+        modePanel.addView(autoLimitSettings);
+        return modePanel;
+    }
+
+    private RadioButton modeOption(String label) {
+        RadioButton option = new RadioButton(this);
+        option.setId(View.generateViewId());
+        option.setText(label);
+        option.setTextColor(Color.WHITE);
+        option.setTextSize(14f);
+        option.setButtonTintList(new ColorStateList(
+                new int[][] { new int[] { android.R.attr.state_checked }, new int[] {} },
+                new int[] { YELLOW, Color.rgb(218, 211, 228) }));
+        return option;
+    }
+
+    private void applyBrandSeekColors(SeekBar seek) {
+        seek.setThumbTintList(ColorStateList.valueOf(YELLOW));
+        seek.setProgressTintList(ColorStateList.valueOf(YELLOW));
+        seek.setProgressBackgroundTintList(ColorStateList.valueOf(Color.rgb(86, 78, 101)));
+    }
+
+    private void bindModeSettings() {
+        SharedPreferences prefs = getSharedPreferences("state", MODE_PRIVATE);
+        boolean auto = BypassService.autoLimitMode(prefs);
+        immediateMode.setChecked(!auto);
+        autoLimitMode.setChecked(auto);
+        limitSeek.setProgress(BypassService.limitPercent(prefs));
+        marginSeek.setProgress(BypassService.resumeMargin(prefs));
+        renderModeSettings();
+
+        immediateMode.setOnCheckedChangeListener((button, checked) -> {
+            if (!checked) return;
+            prefs.edit().putString(BypassService.PREF_MODE,
+                    BypassService.MODE_IMMEDIATE).apply();
+            renderModeSettings();
+        });
+        autoLimitMode.setOnCheckedChangeListener((button, checked) -> {
+            if (!checked) return;
+            prefs.edit().putString(BypassService.PREF_MODE,
+                    BypassService.MODE_AUTO_LIMIT).apply();
+            renderModeSettings();
+        });
+        limitSeek.setOnSeekBarChangeListener(seekListener(value ->
+                prefs.edit().putInt(BypassService.PREF_LIMIT_PERCENT, value).apply()));
+        marginSeek.setOnSeekBarChangeListener(seekListener(value ->
+                prefs.edit().putInt(BypassService.PREF_RESUME_MARGIN, value).apply()));
+    }
+
+    private interface IntConsumer { void accept(int value); }
+
+    private SeekBar.OnSeekBarChangeListener seekListener(IntConsumer save) {
+        return new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seek, int progress, boolean fromUser) {
+                if (fromUser) save.accept(progress);
+                renderModeSettings();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seek) { }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seek) { }
+        };
+    }
+
+    private void renderModeSettings() {
+        boolean auto = autoLimitMode.isChecked();
+        autoLimitSettings.setVisibility(auto ? View.VISIBLE : View.GONE);
+        int limit = limitSeek.getProgress();
+        int margin = marginSeek.getProgress();
+        limitLabel.setText(String.format(Locale.US, "Separate at %d%%", limit));
+        marginLabel.setText(String.format(Locale.US,
+                "Resume charging at %d%% (-%d pts)", Math.max(0, limit - margin), margin));
     }
 
     private View buildHeader() {
@@ -244,10 +372,6 @@ public final class MainActivity extends Activity {
         badge.setOrientation(LinearLayout.VERTICAL);
         badge.setGravity(Gravity.CENTER);
         badge.setPadding(dp(16), dp(5), dp(16), dp(5));
-        TextView copy = text("Support device testing or star the project.", 8f,
-                Color.rgb(205, 196, 218), false);
-        copy.setGravity(Gravity.CENTER);
-        badge.addView(copy);
         TextView title = text("JESTY APPS ARE FREE & OPEN SOURCE", 9f, YELLOW, true);
         title.setGravity(Gravity.CENTER);
         title.setLetterSpacing(0.05f);
@@ -360,6 +484,10 @@ public final class MainActivity extends Activity {
         if (active) {
             stateText.setText("CHARGING SEPARATED");
             stateText.setTextColor(YELLOW);
+        } else if (serviceState == BypassService.State.CHARGING_TO_LIMIT) {
+            stateText.setText(String.format(Locale.US, "CHARGING TO %d%%",
+                    BypassService.limitPercent(getSharedPreferences("state", MODE_PRIVATE))));
+            stateText.setTextColor(Color.WHITE);
         } else if (serviceState == BypassService.State.ENABLING) {
             stateText.setText("VALIDATING...");
             stateText.setTextColor(YELLOW);

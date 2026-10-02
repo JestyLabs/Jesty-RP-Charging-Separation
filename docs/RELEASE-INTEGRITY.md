@@ -84,3 +84,20 @@ The release changes only the launcher vector and version metadata. The
 notification icon and all charging, monitoring, safety, and boot code are
 unchanged from 1.4.1. The exact signed APK passed static artifact validation but
 was not installed on the physical Flip 2 during this release round.
+
+## 1.5.0-rc1 automatic-limit pre-release
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `18`
+- Version name: `1.5.0-rc1`
+- APK: `Jesty-RP-Charging-Separation-1.5.0-rc1.apk`
+- Signed APK SHA-256:
+  `BF2AC549B28C9AD850D0C6F6F4459EE2CA69E4EFFE14B547DD76E412FE1C7E24`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The signed APK passed build, package, alignment, and signature checks. The
+automatic-limit cycle remains unverified on a physical Retroid device; this
+artifact is a pre-release and must not be promoted to stable until that test
+uses this exact APK.

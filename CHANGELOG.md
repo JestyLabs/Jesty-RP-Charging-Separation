@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.0-rc1 (pre-release)
+
+- Added **Immediate** and **Automatic limit** separation modes. Automatic limit
+  charges normally up to a configurable limit (80% by default), separates
+  there, and resumes charging after the battery drops by a configurable margin
+  (10 percentage points by default), e.g. separate at 80% and resume at 70%.
+- Removed the "Support device testing or star the project." badge text.
+- Rejects invalid battery-percentage readings before automatic mode can engage.
+
 ## 1.4.2
 
 - Replaced the irregular launcher bolt with a simple centered yellow bolt on a

@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.4.2"><strong>Download APK</strong></a>
+  · <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.0-rc1">Test automatic limit (pre-release)</a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -41,6 +42,11 @@ running device.
 
 - No user-managed root, Magisk, Termux, or ADB setup.
 - Live battery current, USB input, direct-to-device estimate, and temperature.
+- **Immediate** or **Automatic limit** mode: separate right away, or charge to
+  a configurable limit (80% by default) and resume charging after a
+  configurable drop (10 points by default, e.g. separate at 80%, resume at 70%).
+  Automatic limit is available in the 1.5.0-rc1 testing pre-release; 1.4.2 is
+  the latest stable release.
 - Verifies that separation actually activated before reporting success.
 - Restores normal charging if validation or safety telemetry fails.
 - Optional restore after a normal reboot.
