@@ -134,3 +134,21 @@ physical validation.
 The Java policy test, Android build, ZIP alignment, package/version inspection,
 and APK signature verification passed. No Retroid was connected by ADB for this
 build, so the exact 1.5.1 layout and behavior have not been checked on device.
+
+## 1.5.2 mode selection and layout polish
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `21`
+- Version name: `1.5.2`
+- APK: `Jesty-RP-Charging-Separation-1.5.2.apk`
+- Signed APK size: `6,058,927` bytes
+- Signed APK SHA-256:
+  `A9DAD181872481E862F8BB5D324C2C9E34EE0A9099CBEB5481B22E8B4F0D5A09`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java policy test, Android build, ZIP alignment, package/version inspection,
+and APK signature verification passed. No Retroid was connected by ADB for this
+build; the exact 1.5.2 mode-toggle sequence and screen layout still need a
+physical device check.

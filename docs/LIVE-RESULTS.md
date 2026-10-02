@@ -1,6 +1,6 @@
 # Live validation status
 
-The exact v1.5.1 APK was built and signed on Windows without a connected
+The exact v1.5.2 APK was built and signed on Windows without a connected
 Retroid. Its compact layout and dependent-control behavior still need a
 physical screen and interaction check.
 

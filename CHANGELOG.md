@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.2
+
+- Preserve the selected charging mode when Bypass charging is switched off and
+  restore its radio selection when switched on again. The dependent controls
+  stay disabled while bypass is off, and reboot persistence still turns off.
+- Hide the scroll indicator without removing swipe scrolling.
+- Widen the live dashboard on wide screens to close the gap between panels.
+- Capitalize the Bypass charging and mode labels and simplify the Right away
+  helper text.
+
 ## 1.5.1
 
 - Combined the left-side controls into one panel and moved reboot persistence

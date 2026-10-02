@@ -67,6 +67,7 @@ public final class MainActivity extends Activity {
     private TextView diagnostic;
     private RadioButton immediateMode;
     private RadioButton autoLimitMode;
+    private RadioGroup modeGroup;
     private LinearLayout autoLimitSettings;
     private EditText limitInput;
     private EditText resumeInput;
@@ -91,8 +92,7 @@ public final class MainActivity extends Activity {
 
         boolean desiredAtLaunch = prefs.getBoolean("desired_enabled", false);
         if (!desiredAtLaunch) {
-            prefs.edit().putBoolean("auto_on_boot", false)
-                    .putString(BypassService.PREF_MODE, BypassService.MODE_IMMEDIATE).apply();
+            prefs.edit().putBoolean("auto_on_boot", false).apply();
         }
         autoBootToggle.setChecked(desiredAtLaunch && prefs.getBoolean("auto_on_boot", false));
         autoBootToggle.setOnCheckedChangeListener((button, checked) ->
@@ -104,8 +104,7 @@ public final class MainActivity extends Activity {
             if (suppressToggle) return;
             SharedPreferences.Editor settings = prefs.edit().putBoolean("desired_enabled", checked);
             if (!checked) {
-                settings.putBoolean("auto_on_boot", false)
-                        .putString(BypassService.PREF_MODE, BypassService.MODE_IMMEDIATE);
+                settings.putBoolean("auto_on_boot", false);
                 autoBootToggle.setChecked(false);
             }
             settings.apply();
@@ -156,6 +155,8 @@ public final class MainActivity extends Activity {
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
+        scroll.setVerticalScrollBarEnabled(false);
+        scroll.setHorizontalScrollBarEnabled(false);
         int panelWidth = wide ? Math.round(metrics.widthPixels * 0.50f)
                 : metrics.widthPixels;
         root.addView(scroll, new FrameLayout.LayoutParams(
@@ -202,7 +203,7 @@ public final class MainActivity extends Activity {
         if (wide) {
             dashboard.setBackground(roundedPanel(0xB3100B19, 0x88B15BFF));
             dashboard.setPadding(dp(12), dp(10), dp(12), dp(10));
-            int width = Math.round(metrics.widthPixels * 0.42f);
+            int width = Math.round(metrics.widthPixels * 0.46f);
             FrameLayout.LayoutParams dashboardParams = new FrameLayout.LayoutParams(
                     width, ViewGroup.LayoutParams.WRAP_CONTENT,
                     Gravity.END | Gravity.BOTTOM);
@@ -249,7 +250,7 @@ public final class MainActivity extends Activity {
         LinearLayout switchPanel = new LinearLayout(this);
         switchPanel.setOrientation(LinearLayout.VERTICAL);
         separationToggle = new Switch(this);
-        separationToggle.setText("Bypass charging");
+        separationToggle.setText("BYPASS CHARGING");
         separationToggle.setTextColor(Color.WHITE);
         separationToggle.setTextSize(18f);
         separationToggle.setTypeface(Typeface.DEFAULT_BOLD);
@@ -276,15 +277,15 @@ public final class MainActivity extends Activity {
         heading.setLetterSpacing(0.06f);
         modePanel.addView(heading);
 
-        RadioGroup modes = new RadioGroup(this);
-        modes.setOrientation(RadioGroup.VERTICAL);
-        immediateMode = modeOption("Right away");
-        modes.addView(immediateMode);
-        modes.addView(optionHelp("Stops active charging while USB is connected."));
-        autoLimitMode = modeOption("At a battery level");
-        modes.addView(autoLimitMode);
-        modes.addView(optionHelp("Charges normally up to a level you choose, then stops."));
-        modePanel.addView(modes);
+        modeGroup = new RadioGroup(this);
+        modeGroup.setOrientation(RadioGroup.VERTICAL);
+        immediateMode = modeOption("RIGHT AWAY");
+        modeGroup.addView(immediateMode);
+        modeGroup.addView(optionHelp("Stops active charging to the battery."));
+        autoLimitMode = modeOption("AT A BATTERY LEVEL");
+        modeGroup.addView(autoLimitMode);
+        modeGroup.addView(optionHelp("Charges normally up to a level you choose, then stops."));
+        modePanel.addView(modeGroup);
 
         autoLimitSettings = new LinearLayout(this);
         autoLimitSettings.setOrientation(LinearLayout.VERTICAL);
@@ -460,8 +461,7 @@ public final class MainActivity extends Activity {
 
     private void bindModeSettings() {
         boolean auto = BypassService.autoLimitMode(prefs);
-        immediateMode.setChecked(!auto);
-        autoLimitMode.setChecked(auto);
+        modeGroup.check(auto ? autoLimitMode.getId() : immediateMode.getId());
         renderLimitSettings(null);
 
         immediateMode.setOnCheckedChangeListener((button, checked) -> {
@@ -487,14 +487,10 @@ public final class MainActivity extends Activity {
         autoBootToggle.setAlpha(enabled ? 1f : 0.42f);
         if (enabled) {
             boolean auto = BypassService.autoLimitMode(prefs);
-            immediateMode.setChecked(!auto);
-            autoLimitMode.setChecked(auto);
+            modeGroup.check(auto ? autoLimitMode.getId() : immediateMode.getId());
         } else {
-            prefs.edit().putBoolean("auto_on_boot", false)
-                    .putString(BypassService.PREF_MODE, BypassService.MODE_IMMEDIATE).apply();
+            prefs.edit().putBoolean("auto_on_boot", false).apply();
             autoBootToggle.setChecked(false);
-            immediateMode.setChecked(false);
-            autoLimitMode.setChecked(false);
         }
         renderLimitSettings(null);
     }
@@ -510,7 +506,7 @@ public final class MainActivity extends Activity {
     }
 
     private void renderLimitSettings(String note) {
-        autoLimitSettings.setVisibility(Boolean.TRUE.equals(controlsEnabled) && autoLimitMode.isChecked()
+        autoLimitSettings.setVisibility(autoLimitMode.isChecked()
                 ? View.VISIBLE : View.GONE);
         limitInput.setText(String.valueOf(BypassService.limitPercent(prefs)));
         resumeInput.setText(String.valueOf(BypassService.resumePercent(prefs)));

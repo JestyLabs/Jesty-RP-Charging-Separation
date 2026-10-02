@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.1"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.2"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -63,9 +63,9 @@ start separation as soon as it is available instead. Existing 1.5.0-rc1
 settings are migrated automatically.
 
 When **Bypass charging** is off, the mode and reboot controls are disabled.
-Turning it off also clears the reboot setting and selects **Right away** for
-the next time you enable it. The saved stop and charge-again percentages remain
-available if you choose **At a battery level** again.
+Turning it off clears the reboot setting but remembers the selected charging
+mode and the saved stop and charge-again percentages for the next time you
+enable it.
 
 ## Normal charging vs Charging Separation
 
@@ -122,7 +122,7 @@ The maintainer reports full charging-separation compatibility, tested with help
 from owners in the
 [Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/)
 for the four models above. These are compatibility reports, not equivalent
-per-device benchmark captures. The exact v1.5.1 APK, its screen layout, and
+per-device benchmark captures. The exact v1.5.2 APK, its screen layout, and
 the complete automatic charge/resume cycle have not yet been independently
 documented on every model; see [live results](docs/LIVE-RESULTS.md).
 
@@ -139,8 +139,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.5.1.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.1).
+1. Download `Jesty-RP-Charging-Separation-1.5.2.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.2).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.

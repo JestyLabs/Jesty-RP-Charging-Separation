@@ -6,8 +6,9 @@
 refresh while visible. The left controls share one panel. The live dashboard
 is anchored at the bottom right on wide landscape screens and is stacked under
 the controls on narrower screens. When bypass is off, dependent controls are
-disabled, reboot persistence is cleared, and the next enable starts in Right
-away mode; the two saved battery percentages are retained.
+disabled, reboot persistence is cleared, and the selected mode and two saved
+battery percentages are retained for the next enable. The scroll indicator is
+hidden while swipe scrolling remains available.
 Closing the Activity does not represent the controller's requested state.
 
 ## Foreground controller
