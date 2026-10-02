@@ -3,8 +3,11 @@
 ## UI process
 
 `MainActivity` owns only the dashboard, user switches, and one-second telemetry
-refresh while visible. The live dashboard stays in a right-hand panel on wide
-landscape screens and is stacked under the controls on narrower screens.
+refresh while visible. The left controls share one panel. The live dashboard
+is anchored at the bottom right on wide landscape screens and is stacked under
+the controls on narrower screens. When bypass is off, dependent controls are
+disabled, reboot persistence is cleared, and the next enable starts in Right
+away mode; the two saved battery percentages are retained.
 Closing the Activity does not represent the controller's requested state.
 
 ## Foreground controller

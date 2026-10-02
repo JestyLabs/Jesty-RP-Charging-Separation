@@ -117,3 +117,20 @@ uses this exact APK.
 The exact APK passed static build and signature checks. No Retroid was connected
 for the 1.5.0 build, so the new layout and charge/resume cycle remain pending
 physical validation.
+
+## 1.5.1 compact controls and live dashboard
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `20`
+- Version name: `1.5.1`
+- APK: `Jesty-RP-Charging-Separation-1.5.1.apk`
+- Signed APK size: `6,058,927` bytes
+- Signed APK SHA-256:
+  `ED467719B7810EB399D6952A8E8F128C696395965D8CB2228233D2FE614A1021`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java policy test, Android build, ZIP alignment, package/version inspection,
+and APK signature verification passed. No Retroid was connected by ADB for this
+build, so the exact 1.5.1 layout and behavior have not been checked on device.

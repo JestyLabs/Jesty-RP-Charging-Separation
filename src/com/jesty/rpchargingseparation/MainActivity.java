@@ -54,8 +54,10 @@ public final class MainActivity extends Activity {
     private ImageView backgroundImage;
     private boolean visualSeparated;
     private boolean suppressToggle;
+    private Boolean controlsEnabled;
     private Switch separationToggle;
     private Switch autoBootToggle;
+    private LinearLayout modePanel;
     private TextView stateText;
     private TextView stateDetail;
     private TextView batteryValue;
@@ -87,14 +89,27 @@ public final class MainActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setContentView(buildUi());
 
-        autoBootToggle.setChecked(prefs.getBoolean("auto_on_boot", false));
+        boolean desiredAtLaunch = prefs.getBoolean("desired_enabled", false);
+        if (!desiredAtLaunch) {
+            prefs.edit().putBoolean("auto_on_boot", false)
+                    .putString(BypassService.PREF_MODE, BypassService.MODE_IMMEDIATE).apply();
+        }
+        autoBootToggle.setChecked(desiredAtLaunch && prefs.getBoolean("auto_on_boot", false));
         autoBootToggle.setOnCheckedChangeListener((button, checked) ->
                 prefs.edit().putBoolean("auto_on_boot", checked).apply());
         bindModeSettings();
+        setControlsEnabled(desiredAtLaunch);
 
         separationToggle.setOnCheckedChangeListener((button, checked) -> {
             if (suppressToggle) return;
-            prefs.edit().putBoolean("desired_enabled", checked).apply();
+            SharedPreferences.Editor settings = prefs.edit().putBoolean("desired_enabled", checked);
+            if (!checked) {
+                settings.putBoolean("auto_on_boot", false)
+                        .putString(BypassService.PREF_MODE, BypassService.MODE_IMMEDIATE);
+                autoBootToggle.setChecked(false);
+            }
+            settings.apply();
+            setControlsEnabled(checked);
             Intent service = new Intent(this, BypassService.class)
                     .setAction(checked
                             ? BypassService.ACTION_ENABLE
@@ -152,12 +167,6 @@ public final class MainActivity extends Activity {
         actionParams.setMargins(0, dp(16), dp(18), 0);
         root.addView(topActions, actionParams);
 
-        LinearLayout openSourceBadge = buildOpenSourceBadge();
-        FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, dp(40), Gravity.BOTTOM | Gravity.END);
-        badgeParams.setMargins(0, 0, dp(18), dp(16));
-        root.addView(openSourceBadge, badgeParams);
-
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int horizontal = dp(24);
@@ -174,8 +183,20 @@ public final class MainActivity extends Activity {
         stateDetail.setPadding(dp(CONTENT_INSET_DP), dp(2), dp(CONTENT_INSET_DP), dp(10));
         content.addView(stateDetail);
 
-        content.addView(buildSwitchPanel());
-        content.addView(buildModePanel());
+        LinearLayout controls = panel();
+        controls.addView(buildSwitchPanel());
+        modePanel = buildModePanel();
+        controls.addView(modePanel);
+        autoBootToggle = new Switch(this);
+        autoBootToggle.setText("Maintain bypass charging after reboot");
+        autoBootToggle.setTextColor(Color.WHITE);
+        autoBootToggle.setTextSize(13f);
+        applyBrandToggleColors(autoBootToggle);
+        LinearLayout.LayoutParams bootParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(40));
+        bootParams.setMargins(0, dp(8), 0, 0);
+        controls.addView(autoBootToggle, bootParams);
+        content.addView(controls);
 
         LinearLayout dashboard = buildDashboard();
         if (wide) {
@@ -184,8 +205,8 @@ public final class MainActivity extends Activity {
             int width = Math.round(metrics.widthPixels * 0.42f);
             FrameLayout.LayoutParams dashboardParams = new FrameLayout.LayoutParams(
                     width, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.END | Gravity.CENTER_VERTICAL);
-            dashboardParams.setMargins(0, dp(66), dp(18), dp(66));
+                    Gravity.END | Gravity.BOTTOM);
+            dashboardParams.setMargins(0, 0, dp(18), dp(18));
             root.addView(dashboard, dashboardParams);
         } else {
             content.addView(dashboard);
@@ -225,7 +246,8 @@ public final class MainActivity extends Activity {
     }
 
     private LinearLayout buildSwitchPanel() {
-        LinearLayout switchPanel = panel();
+        LinearLayout switchPanel = new LinearLayout(this);
+        switchPanel.setOrientation(LinearLayout.VERTICAL);
         separationToggle = new Switch(this);
         separationToggle.setText("Bypass charging");
         separationToggle.setTextColor(Color.WHITE);
@@ -242,19 +264,13 @@ public final class MainActivity extends Activity {
         explanation.setPadding(0, 0, dp(56), dp(6));
         switchPanel.addView(explanation);
 
-        autoBootToggle = new Switch(this);
-        autoBootToggle.setText("Turn on again after restart");
-        autoBootToggle.setTextColor(MUTED);
-        autoBootToggle.setTextSize(13f);
-        applyBrandToggleColors(autoBootToggle);
-        switchPanel.addView(autoBootToggle, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
         return switchPanel;
     }
 
-    private View buildModePanel() {
-        LinearLayout modePanel = panel();
-        modePanel.setPadding(dp(CONTENT_INSET_DP), dp(10), dp(CONTENT_INSET_DP), dp(10));
+    private LinearLayout buildModePanel() {
+        LinearLayout modePanel = new LinearLayout(this);
+        modePanel.setOrientation(LinearLayout.VERTICAL);
+        modePanel.setPadding(0, dp(10), 0, 0);
 
         TextView heading = text("WHEN TO STOP CHARGING", 11f, MUTED, true);
         heading.setLetterSpacing(0.06f);
@@ -462,8 +478,40 @@ public final class MainActivity extends Activity {
         });
     }
 
+    private void setControlsEnabled(boolean enabled) {
+        if (controlsEnabled != null && controlsEnabled == enabled) return;
+        controlsEnabled = enabled;
+        setEnabledRecursively(modePanel, enabled);
+        modePanel.setAlpha(enabled ? 1f : 0.42f);
+        autoBootToggle.setEnabled(enabled);
+        autoBootToggle.setAlpha(enabled ? 1f : 0.42f);
+        if (enabled) {
+            boolean auto = BypassService.autoLimitMode(prefs);
+            immediateMode.setChecked(!auto);
+            autoLimitMode.setChecked(auto);
+        } else {
+            prefs.edit().putBoolean("auto_on_boot", false)
+                    .putString(BypassService.PREF_MODE, BypassService.MODE_IMMEDIATE).apply();
+            autoBootToggle.setChecked(false);
+            immediateMode.setChecked(false);
+            autoLimitMode.setChecked(false);
+        }
+        renderLimitSettings(null);
+    }
+
+    private void setEnabledRecursively(View view, boolean enabled) {
+        view.setEnabled(enabled);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int index = 0; index < group.getChildCount(); index++) {
+                setEnabledRecursively(group.getChildAt(index), enabled);
+            }
+        }
+    }
+
     private void renderLimitSettings(String note) {
-        autoLimitSettings.setVisibility(autoLimitMode.isChecked() ? View.VISIBLE : View.GONE);
+        autoLimitSettings.setVisibility(Boolean.TRUE.equals(controlsEnabled) && autoLimitMode.isChecked()
+                ? View.VISIBLE : View.GONE);
         limitInput.setText(String.valueOf(BypassService.limitPercent(prefs)));
         resumeInput.setText(String.valueOf(BypassService.resumePercent(prefs)));
         limitNote.setText(note == null ? "" : note);
@@ -474,10 +522,14 @@ public final class MainActivity extends Activity {
         LinearLayout dashboard = new LinearLayout(this);
         dashboard.setOrientation(LinearLayout.VERTICAL);
 
-        TextView heading = text("LIVE", 11f, YELLOW, true);
+        TextView heading = text("LIVE DASHBOARD", 11f, YELLOW, true);
         heading.setLetterSpacing(0.12f);
         heading.setPadding(dp(4), 0, 0, dp(4));
         dashboard.addView(heading);
+
+        diagnostic = text("", 11f, MUTED, false);
+        diagnostic.setPadding(dp(4), 0, 0, dp(7));
+        dashboard.addView(diagnostic);
 
         LinearLayout row1 = row();
         batteryValue = addCard(row1, "BATTERY");
@@ -489,14 +541,6 @@ public final class MainActivity extends Activity {
         tempValue = addCard(row2, "TEMPERATURE");
         dashboard.addView(row2);
 
-        diagnostic = text("", 10f, HINT, false);
-        diagnostic.setPadding(dp(4), dp(6), 0, 0);
-        dashboard.addView(diagnostic);
-
-        TextView legend = text("Battery: + charging  \u00b7  - using battery",
-                10f, HINT, false);
-        legend.setPadding(dp(4), dp(2), 0, 0);
-        dashboard.addView(legend);
         return dashboard;
     }
 
@@ -532,23 +576,6 @@ public final class MainActivity extends Activity {
         action.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, dp(38)));
         return action;
-    }
-
-    private LinearLayout buildOpenSourceBadge() {
-        LinearLayout badge = new LinearLayout(this);
-        badge.setOrientation(LinearLayout.VERTICAL);
-        badge.setGravity(Gravity.CENTER);
-        badge.setPadding(dp(16), dp(5), dp(16), dp(5));
-        TextView title = text("JESTY APPS ARE FREE & OPEN SOURCE", 9f, YELLOW, true);
-        title.setGravity(Gravity.CENTER);
-        title.setLetterSpacing(0.05f);
-        badge.addView(title);
-        GradientDrawable bubble = new GradientDrawable();
-        bubble.setColor(0xB5100B19);
-        bubble.setCornerRadius(dp(25));
-        bubble.setStroke(dp(1), 0x667B4AE2);
-        badge.setBackground(bubble);
-        return badge;
     }
 
     private void openExternal(String url) {
@@ -660,6 +687,7 @@ public final class MainActivity extends Activity {
         suppressToggle = true;
         separationToggle.setChecked(desired);
         suppressToggle = false;
+        setControlsEnabled(desired);
 
         String detail = BypassService.detail();
         if (active) {
@@ -698,11 +726,10 @@ public final class MainActivity extends Activity {
         tempValue.setText(twoLine(
                 String.format(Locale.US, "%.1f \u00b0C", telemetry.temperatureC),
                 "battery"));
-        diagnostic.setText(String.format(Locale.US,
-                "%s | %s%s | %s | limit %d/%d | counter %d uAh",
-                Build.MODEL, telemetry.usbType, telemetry.pdActive ? " / PD" : "",
-                telemetry.batteryStatus, telemetry.limit, telemetry.limitMax,
-                telemetry.chargeCounterUah));
+        diagnostic.setText(Build.MODEL + "  ·  "
+                + (!telemetry.usbPresent ? "On battery"
+                : active ? "Not charging · running from USB"
+                : telemetry.batteryStatus));
     }
 
     private void setState(String label, int color) {

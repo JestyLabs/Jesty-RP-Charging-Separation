@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.1
+
+- Combined the left-side controls into one panel and moved reboot persistence
+  to the end under the label **Maintain bypass charging after reboot**.
+- Disabling Bypass charging now clears and disables the dependent mode and
+  reboot options; turning it back on starts with Right away selected.
+- Anchored the live dashboard at the bottom right on wide screens, placed the
+  device and charging state under its heading, and removed the footer badge and
+  diagnostic legend.
+
 ## 1.5.0
 
 - Documented maintainer and Reddit community compatibility testing for Pocket

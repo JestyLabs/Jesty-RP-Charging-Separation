@@ -10,6 +10,12 @@ The checklist below is for collecting reproducible evidence for the exact
 v1.5.0 APK and its new automatic threshold mode; community reports do not
 mark these individual checks complete.
 
+For v1.5.1, also check the compact controls on the actual screen: with Bypass
+charging off, the mode and reboot options are gray and cannot be changed;
+turning it off clears reboot persistence and mode selection; turning it back on
+selects Right away; and the LIVE DASHBOARD is visible at the bottom right on
+wide landscape screens.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.
