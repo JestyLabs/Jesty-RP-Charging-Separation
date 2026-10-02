@@ -29,6 +29,16 @@ redesigns the dashboard around simpler controls and live readings.
   1.4.2 and rc1, the two threshold transitions, manual mode, USB reconnect,
   background operation, reboot restoration, and the final screen layout.
 
+## Community compatibility update
+
+The maintainer reports tests with owners in the
+[Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/)
+and confirms compatibility with Retroid Pocket 5, Flip 2, Pocket Mini, and
+Pocket Mini V2. This supplements the earlier Flip 2 measurements and RP5
+functional report. It does not replace the release-round validation items
+above: per-device telemetry for the exact v1.5.0 APK, the redesigned layout,
+and a complete automatic charge/resume cycle remain undocumented here.
+
 ## Artifact
 
 - Package: `com.jesty.rpchargingseparation`

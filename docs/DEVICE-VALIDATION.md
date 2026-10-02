@@ -3,6 +3,13 @@
 Record the exact model, firmware build, charger, cable, battery percentage, and
 ambient conditions. Redact serial numbers and account information.
 
+The maintainer reports compatible operation on Pocket 5, Flip 2, Pocket Mini,
+and Pocket Mini V2 with help from owners in the
+[Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/).
+The checklist below is for collecting reproducible evidence for the exact
+v1.5.0 APK and its new automatic threshold mode; community reports do not
+mark these individual checks complete.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.
@@ -16,6 +23,17 @@ ambient conditions. Redact serial numbers and account information.
 - [ ] Reboot with boot restoration ON reconciles correctly after USB is present.
 - [ ] Force stop behavior and recovery after opening the app are documented.
 - [ ] The device charges normally after all tests.
+
+### v1.5.0 automatic threshold mode
+
+- [ ] Normal charging continues below **Stop charging at** (80% by default).
+- [ ] At that level, charging separation activates and USB continues powering
+  the handheld.
+- [ ] At **Charge again at** (70% by default), normal charging resumes.
+- [ ] A second cycle reaches the stop level again without manual intervention.
+- [ ] Manual **Right away** mode, USB reconnect, background service, and reboot
+  restoration still behave as expected.
+- [ ] The redesigned layout is readable on the model's screen.
 
 ## Pocket Mini V2 1.4.1 compatibility check
 

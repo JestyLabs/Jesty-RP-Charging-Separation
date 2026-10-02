@@ -2,6 +2,9 @@
 
 ## 1.5.0
 
+- Documented maintainer and Reddit community compatibility testing for Pocket
+  5, Flip 2, Pocket Mini, and Pocket Mini V2, with device-validation scope noted
+  separately.
 - Redesigned the dashboard with a centered logo, live panel, clearer status
   wording, and numeric stop/charge-again controls.
 - Stores an absolute charge-again level (70% by default) at least five

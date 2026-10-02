@@ -1,5 +1,15 @@
 # Live validation status
 
+## Community compatibility reports
+
+The maintainer reports testing with help from owners in the
+[Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/).
+The app is reported compatible with Retroid Pocket 5, Flip 2, Pocket Mini, and
+Pocket Mini V2. The Flip 2 has the instrumented charging-separation capture
+below; the other model reports do not yet have publishable, sanitized telemetry
+here. The evidence recorded in this repository does not document a complete
+automatic charge/resume cycle on the exact v1.5.0 APK for each model.
+
 ## Confirmed foundations
 
 - Retroid's `PServerBinder` is reachable through the hidden Android service
@@ -23,10 +33,10 @@
   charging and -0.0111 A during separation at a stable 29.7 C.
 - Only the public package had an active control service during the capture.
 
-## Not yet confirmed for this public build
+## Further device evidence to collect
 
-- A publishable RP5 telemetry capture is still pending; do not present the
-  existing user report as an independently reproduced benchmark.
+- Publishable RP5, Pocket Mini, and Pocket Mini V2 telemetry captures are still
+  pending; community compatibility reports are not independent benchmarks.
 - Reboot, unplug/replug, service-destruction, and restore behavior must be
   repeated after the final build is signed.
 

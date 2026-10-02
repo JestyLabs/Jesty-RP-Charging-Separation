@@ -20,9 +20,10 @@
 </p>
 
 <p align="center">
-  <img alt="Retroid Pocket Flip 2" src="https://img.shields.io/badge/validated-Flip%202-7C3AED?style=for-the-badge">
-  <img alt="Retroid Pocket 5" src="https://img.shields.io/badge/reported-RP5-F59E0B?style=for-the-badge">
-  <img alt="Retroid Pocket Mini V2" src="https://img.shields.io/badge/candidate-Mini%20V2-F59E0B?style=for-the-badge">
+  <img alt="Retroid Pocket Flip 2" src="https://img.shields.io/badge/compatible-Flip%202-7C3AED?style=for-the-badge">
+  <img alt="Retroid Pocket 5" src="https://img.shields.io/badge/compatible-RP5-7C3AED?style=for-the-badge">
+  <img alt="Retroid Pocket Mini" src="https://img.shields.io/badge/compatible-Mini-7C3AED?style=for-the-badge">
+  <img alt="Retroid Pocket Mini V2" src="https://img.shields.io/badge/compatible-Mini%20V2-7C3AED?style=for-the-badge">
   <img alt="Android 13" src="https://img.shields.io/badge/Android-13-3DDC84?style=for-the-badge&amp;logo=android&amp;logoColor=white">
   <img alt="No Magisk or rooting" src="https://img.shields.io/badge/setup-no%20Magisk%20%2F%20rooting-16A34A?style=for-the-badge">
   <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
@@ -49,6 +50,17 @@ running device.
 The app uses Retroid's own `PServerBinder` bridge. It does not physically
 disconnect the battery, so small positive or negative currents can still appear
 depending on load, charger, firmware, temperature, and battery state.
+
+### Set a battery threshold
+
+Enable **Bypass charging** and choose **At a battery level** under **When to stop
+charging**. Set **Stop charging at** to the level where the app should switch to
+USB power (80% by default). Set **Charge again at** to the lower level where
+normal charging should resume (70% by default). You can type percentages or use
+the −/+ buttons in five-point steps. The app adjusts invalid values and keeps
+the two levels at least five percentage points apart. Choose **Right away** to
+start separation as soon as it is available instead. Existing 1.5.0-rc1
+settings are migrated automatically.
 
 ## Normal charging vs Charging Separation
 
@@ -89,9 +101,10 @@ connected and continued supplying the handheld.
 
 | Device | Evidence |
 | --- | --- |
-| **Retroid Pocket Flip 2** | Charging behavior measured on earlier versions; the exact 1.5.0 APK and redesigned screen have not yet been tested on device |
-| **Retroid Pocket 5** | Earlier build reported working; 1.5.0 and sanitized repeat telemetry are still pending |
-| **Retroid Pocket Mini V2** | Capability-compatible candidate; exact-device validation pending |
+| **Retroid Pocket Flip 2** | Compatible; charging behavior measured on earlier builds and supported by community testing |
+| **Retroid Pocket 5** | Compatible according to maintainer and community testing |
+| **Retroid Pocket Mini** | Compatible according to community testing |
+| **Retroid Pocket Mini V2** | Compatible according to community testing |
 | Other Retroid models | Not validated — treat as unsupported until tested |
 | Unrelated Android devices | Unsupported |
 
@@ -99,6 +112,14 @@ Compatibility is based on the required Retroid control nodes and privileged
 bridge, not a model-name allowlist. Before enabling separation, the app checks
 those capabilities and validates the resulting hardware state. A similar
 chipset or device name is not treated as proof of successful operation.
+
+The maintainer reports full charging-separation compatibility, tested with help
+from owners in the
+[Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/)
+for the four models above. These are compatibility reports, not equivalent
+per-device benchmark captures. The exact v1.5.0 APK, its redesigned screen, and
+the complete automatic charge/resume cycle have not yet been independently
+documented on every model; see [live results](docs/LIVE-RESULTS.md).
 
 ## Safety behavior
 
