@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.8
+
+- Keep the CPU awake only while automatic mode charges toward the stop level,
+  so the two-second monitor can apply native bypass when the screen sleeps.
+- Release that wake lock at the stop level, on USB disconnect, on disable,
+  and when the service ends.
+
 ## 1.5.7
 
 - Simplify the LIVE card header: align the status with LIVE, place the device

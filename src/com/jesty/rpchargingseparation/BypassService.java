@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.os.Build;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.Locale;
@@ -52,6 +53,7 @@ public final class BypassService extends Service {
     private boolean monitorScheduled;
     // Auto-limit hysteresis: true once the limit was reached, until the resume threshold.
     private boolean limitReached;
+    private PowerManager.WakeLock chargeToLimitWakeLock;
 
     static State state() { return state; }
     static String detail() { return detail; }
@@ -94,6 +96,10 @@ public final class BypassService extends Service {
         super.onCreate();
         prefs = getSharedPreferences("state", MODE_PRIVATE);
         worker = Executors.newSingleThreadScheduledExecutor();
+        PowerManager power = getSystemService(PowerManager.class);
+        chargeToLimitWakeLock = power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                TAG + ":charge-to-limit");
+        chargeToLimitWakeLock.setReferenceCounted(false);
         createChannel();
     }
 
@@ -128,6 +134,7 @@ public final class BypassService extends Service {
             PowerTelemetry before = PowerTelemetry.read();
             if (!before.usbPresent) {
                 if (before.limit != 0) restoreAndConfirm();
+                releaseChargeToLimitWakeLock();
                 state = State.ARMED;
                 detail = "Plug in USB to start";
                 updateNotification(detail);
@@ -149,6 +156,7 @@ public final class BypassService extends Service {
             }
             if (!before.usbPresent) {
                 if (before.limit != 0) restoreAndConfirm();
+                releaseChargeToLimitWakeLock();
                 state = State.ARMED;
                 detail = "Plug in USB to start";
                 updateNotification(detail);
@@ -201,6 +209,7 @@ public final class BypassService extends Service {
 
             state = State.ACTIVE;
             limitReached = autoLimitMode(prefs);
+            releaseChargeToLimitWakeLock();
             Log.i(TAG, before.nativeIdleMode()
                     ? "Reattached to existing native separation"
                     : "Enabled and verified native separation");
@@ -235,6 +244,7 @@ public final class BypassService extends Service {
 
     private void enterLimitCharging(PowerTelemetry telemetry) throws Exception {
         if (telemetry.limit != 0) restoreAndConfirm();
+        holdChargeToLimitWakeLock();
         limitReached = false;
         unsafeSamples = 0;
         state = State.CHARGING_TO_LIMIT;
@@ -264,6 +274,7 @@ public final class BypassService extends Service {
             }
             if (state == State.CHARGING_TO_LIMIT) {
                 if (!telemetry.usbPresent) {
+                    releaseChargeToLimitWakeLock();
                     state = State.ARMED;
                     detail = "Plug in USB to start";
                     updateNotification(detail);
@@ -279,6 +290,7 @@ public final class BypassService extends Service {
             }
             if (state != State.ACTIVE) return;
             if (!telemetry.usbPresent) {
+                releaseChargeToLimitWakeLock();
                 state = State.ARMED;
                 detail = "Plug in USB to start";
                 updateNotification(detail);
@@ -332,6 +344,20 @@ public final class BypassService extends Service {
         worker.scheduleAtFixedRate(this::monitor, 0L, 2L, TimeUnit.SECONDS);
     }
 
+    private void holdChargeToLimitWakeLock() {
+        if (!chargeToLimitWakeLock.isHeld()) {
+            chargeToLimitWakeLock.acquire();
+            Log.i(TAG, "Holding CPU awake until the charge limit is reached");
+        }
+    }
+
+    private void releaseChargeToLimitWakeLock() {
+        if (chargeToLimitWakeLock != null && chargeToLimitWakeLock.isHeld()) {
+            chargeToLimitWakeLock.release();
+            Log.i(TAG, "Released charge-limit wake lock");
+        }
+    }
+
     private void restoreHardware() throws Exception {
         RootBridge.exec("chmod 644 " + PowerTelemetry.LIMIT);
         RootBridge.exec("echo 0 > " + PowerTelemetry.LIMIT);
@@ -349,6 +375,7 @@ public final class BypassService extends Service {
 
     private void disableSafely(String reason, boolean stop) {
         if (!stopping.compareAndSet(false, true) && stop) return;
+        releaseChargeToLimitWakeLock();
         try {
             restoreAndConfirm();
             limitReached = false;
@@ -420,6 +447,7 @@ public final class BypassService extends Service {
     public void onDestroy() {
         Log.i(TAG, "Service destroyed: state=" + state + ", desired="
                 + prefs.getBoolean("desired_enabled", false));
+        releaseChargeToLimitWakeLock();
         if (state == State.ACTIVE || state == State.ENABLING) {
             disableSafely("Service stopped", false);
         }

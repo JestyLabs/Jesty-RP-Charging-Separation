@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.7"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.8"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -46,6 +46,9 @@ running device.
   or charge to a chosen level (80% by default) and charge again at a second
   chosen level (70% by default). The charge-again level stays at least five
   percentage points below the stop level.
+- In battery-level mode, keep the CPU awake while charging toward the stop
+  level so the threshold monitor continues working with the screen off. The
+  wake lock is released when bypass starts, USB disconnects, or bypass stops.
 - Verifies that separation actually activated before reporting success.
 - Restores normal charging if validation or safety telemetry fails.
 - Optional restore after a normal reboot.
@@ -168,8 +171,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.5.7.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.7).
+1. Download `Jesty-RP-Charging-Separation-1.5.8.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.8).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.
@@ -185,8 +188,10 @@ vendor launcher's **Clear all** action also behaved like a force-stop; an
 individual swipe of the app did not. Reopen the app after either force-stop
 path.
 
-The service uses lightweight periodic telemetry and no busy loop. Turning the
-toggle off, or a safety failure, restores normal charging.
+The service uses lightweight periodic telemetry and no busy loop. Automatic
+charging toward a stop level holds a partial CPU wake lock until that phase
+ends; this can use extra power, although it runs only while USB is connected.
+Turning the toggle off, or a safety failure, restores normal charging.
 
 ### Updates
 

@@ -39,6 +39,13 @@ writing the native limit. It also allows a short settling period for the
 post-write `Not charging` status; a persistent mismatch still restores normal
 charging and reports failure.
 
+The two-second executor does not itself keep the CPU running when the screen
+turns off. While `CHARGING_TO_LIMIT` is active, the service holds a partial CPU
+wake lock so the stop threshold is still checked during screen-off charging.
+It releases the lock after bypass activates, USB disconnects, bypass is
+disabled, or the service ends. A sticky service restart in this phase acquires
+the lock again. This trades some plugged-in power use for a timely threshold.
+
 ## In-app updates
 
 `AppUpdater` reads `GET /repos/JestyLabs/Jesty-RP-Charging-Separation/releases/latest`

@@ -1,5 +1,15 @@
 # Live validation status
 
+On Flip 2 firmware 1.0.0.130, the exact signed v1.5.8 APK held its partial CPU
+wake lock while the screen was asleep and automatic mode was charging toward
+85% (`limit=0`, Android `Charging`). Lowering the stop below the current level
+engaged native bypass (`limit=10/10`, `Not charging`) and released the lock.
+After a controlled process crash during charge-to-limit, Android restarted the
+sticky service and it reacquired the lock. The original 80%/65% settings were
+restored with bypass active. This did not reproduce a full asleep charge cycle
+or the issue reporter's stated firmware 1.0.0.311, whose full build ID has not
+been independently verified.
+
 The exact signed v1.5.7 APK was installed in place on a Flip 2. Its LIVE card
 showed the status beside the heading and kept the device and detail lines
 aligned at full width. GITHUB appeared before SUPPORT. With USB connected,

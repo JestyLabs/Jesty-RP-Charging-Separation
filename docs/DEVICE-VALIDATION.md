@@ -28,6 +28,13 @@ For v1.5.7, the simplified LIVE card and GITHUB/SUPPORT button order were
 visually checked on a wide Flip 2 screen. The narrow-screen layout still needs
 checking.
 
+For v1.5.8, test automatic mode across the stop level with the screen asleep,
+especially on the stated Flip 2 firmware 1.0.0.311 in issue #2. Confirm native
+limit changes from `0` to `limitMax` near the selected percentage. The local
+Flip 2 uses 1.0.0.130 firmware; its screen-off wake lock and simulated
+threshold transition were checked, but a full charge cycle on the reporter's
+device remains open. The reported .311 full build ID is unverified.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.

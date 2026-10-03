@@ -1,5 +1,24 @@
 # Release integrity
 
+## 1.5.8 screen-off automatic threshold monitoring
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `29`
+- Version name: `1.5.8`
+- APK: `Jesty-RP-Charging-Separation-1.5.8.apk`
+- Signed APK size: `6,067,119` bytes
+- Signed APK SHA-256:
+  `235FF8FA1A460F9542D39DE9907580A881BABF9045D19731C963F276AD175CE5`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java policy tests, Android build, package/version inspection, and APK
+signature verification passed. The exact APK installed in place on a Flip 2
+with firmware 1.0.0.130. Screen-off wake lock retention, threshold-triggered
+release, and sticky restart reacquisition were verified. A full charge cycle
+on the issue reporter's firmware 1.0.0.311 remains untested.
+
 ## 1.5.7 LIVE card layout
 
 - Package: `com.jesty.rpchargingseparation`
