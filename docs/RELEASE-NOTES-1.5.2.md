@@ -24,6 +24,14 @@ landscape layout.
 - No Retroid was connected by ADB during this build. The exact 1.5.2 toggle
   sequence and visual layout have not yet been checked on device.
 
+### Post-release Flip 2 screenshots
+
+The maintainer later shared [Right away](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/blob/main/assets/screenshots/flip2-v1.5.2-right-away.png)
+and [charging toward 80%](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/blob/main/assets/screenshots/flip2-v1.5.2-charging-to-80.png)
+screenshots from the Flip 2. They document the v1.5.2 layout and a normal
+charging state at 17% with an 80% stop level and a user-set 65% resume level.
+The actual threshold transitions and off/on toggle sequence are not shown.
+
 ## APK
 
 - File: `Jesty-RP-Charging-Separation-1.5.2.apk`

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.3
+
+- Moved the current charging status from the left controls to a compact panel
+  directly above the live dashboard on wide landscape screens. Narrow screens
+  keep the status above the controls.
+- Added maintainer-supplied v1.5.2 Flip 2 screenshots to the README, documenting
+  the two mode views and normal charging toward an 80% stop level.
+
 ## 1.5.2
 
 - Preserve the selected charging mode when Bypass charging is switched off and

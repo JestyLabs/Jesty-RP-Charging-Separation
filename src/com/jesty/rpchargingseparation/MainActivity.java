@@ -178,11 +178,14 @@ public final class MainActivity extends Activity {
         content.addView(buildHeader());
 
         stateText = text("READING HARDWARE...", 19f, YELLOW, true);
-        stateText.setPadding(dp(CONTENT_INSET_DP), 0, dp(CONTENT_INSET_DP), 0);
-        content.addView(stateText);
         stateDetail = text("", 13f, MUTED, false);
-        stateDetail.setPadding(dp(CONTENT_INSET_DP), dp(2), dp(CONTENT_INSET_DP), dp(10));
-        content.addView(stateDetail);
+        if (!wide) {
+            stateText.setPadding(dp(CONTENT_INSET_DP), 0, dp(CONTENT_INSET_DP), 0);
+            stateDetail.setPadding(dp(CONTENT_INSET_DP), dp(2),
+                    dp(CONTENT_INSET_DP), dp(10));
+            content.addView(stateText);
+            content.addView(stateDetail);
+        }
 
         LinearLayout controls = panel();
         controls.addView(buildSwitchPanel());
@@ -201,14 +204,31 @@ public final class MainActivity extends Activity {
 
         LinearLayout dashboard = buildDashboard();
         if (wide) {
+            LinearLayout rightColumn = new LinearLayout(this);
+            rightColumn.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout statusPanel = new LinearLayout(this);
+            statusPanel.setOrientation(LinearLayout.VERTICAL);
+            statusPanel.setPadding(dp(12), dp(8), dp(12), dp(8));
+            statusPanel.setBackground(roundedPanel(0xB3100B19, 0x88B15BFF));
+            stateDetail.setPadding(0, dp(2), 0, 0);
+            statusPanel.addView(stateText);
+            statusPanel.addView(stateDetail);
+            LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            statusParams.setMargins(0, 0, 0, dp(8));
+            rightColumn.addView(statusPanel, statusParams);
             dashboard.setBackground(roundedPanel(0xB3100B19, 0x88B15BFF));
             dashboard.setPadding(dp(12), dp(10), dp(12), dp(10));
+            rightColumn.addView(dashboard, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
             int width = Math.round(metrics.widthPixels * 0.46f);
             FrameLayout.LayoutParams dashboardParams = new FrameLayout.LayoutParams(
                     width, ViewGroup.LayoutParams.WRAP_CONTENT,
                     Gravity.END | Gravity.BOTTOM);
             dashboardParams.setMargins(0, 0, dp(18), dp(18));
-            root.addView(dashboard, dashboardParams);
+            root.addView(rightColumn, dashboardParams);
         } else {
             content.addView(dashboard);
         }

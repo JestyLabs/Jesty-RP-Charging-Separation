@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.2"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.3"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -29,8 +29,9 @@
   <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
 </p>
 
-<img width="1920" height="1080" alt="Screenshot (Oct 2, 2026 2_31_41 PM)" src="https://github.com/user-attachments/assets/0e4346b9-dc09-4348-b414-1398aeac9f4b" />
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0e4346b9-dc09-4348-b414-1398aeac9f4b" alt="v1.5.2 charging toward 80 percent on Retroid Pocket Flip 2" width="960">
+</p>
 
 ## What the app does
 
@@ -69,6 +70,23 @@ When **Bypass charging** is off, the mode and reboot controls are disabled.
 Turning it off clears the reboot setting but remembers the selected charging
 mode and the saved stop and charge-again percentages for the next time you
 enable it.
+
+### v1.5.2 on Retroid Pocket Flip 2
+
+These screenshots from the maintainer's Flip 2 show the released v1.5.2
+dashboard with **RIGHT AWAY** selected, and **AT A BATTERY LEVEL** selected
+while normal charging continues at 17% toward an 80% stop level. The second
+screen shows a user-set 65% charge-again level. They confirm the screen layout
+and displayed charging-to-limit state on the device; they do not show the
+transition at 80% or the later resume at 65%.
+
+In v1.5.3, the charging status moves to the right, directly above the live
+dashboard on wide landscape screens. That placement has not yet been checked
+on a physical Retroid.
+
+<p align="center">
+  <img src="assets/screenshots/flip2-v1.5.2-right-away.png" alt="v1.5.2 Right away mode on Retroid Pocket Flip 2" width="760">
+</p>
 
 ## Normal charging vs Charging Separation
 
@@ -109,7 +127,7 @@ connected and continued supplying the handheld.
 
 | Device | Evidence |
 | --- | --- |
-| **Retroid Pocket Flip 2** | Compatible; charging behavior measured on earlier builds and supported by community testing |
+| **Retroid Pocket Flip 2** | Compatible; charging behavior measured on earlier builds, with v1.5.2 layout and charging-to-limit state shown in screenshots above |
 | **Retroid Pocket 5** | Compatible according to maintainer and community testing |
 | **Retroid Pocket Mini** | Compatible according to community testing |
 | **Retroid Pocket Mini V2** | Compatible according to community testing |
@@ -125,9 +143,9 @@ The maintainer reports full charging-separation compatibility, tested with help
 from owners in the
 [Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/)
 for the four models above. These are compatibility reports, not equivalent
-per-device benchmark captures. The exact v1.5.2 APK, its screen layout, and
-the complete automatic charge/resume cycle have not yet been independently
-documented on every model; see [live results](docs/LIVE-RESULTS.md).
+per-device benchmark captures. The exact v1.5.2 screen is now documented on
+Flip 2, but a complete automatic charge/resume cycle has not yet been recorded
+for each model; see [live results](docs/LIVE-RESULTS.md).
 
 ## Safety behavior
 
@@ -142,8 +160,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.5.2.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.2).
+1. Download `Jesty-RP-Charging-Separation-1.5.3.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.3).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.

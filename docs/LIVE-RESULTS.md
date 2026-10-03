@@ -1,8 +1,17 @@
 # Live validation status
 
+The v1.5.3 status relocation has been built on Windows but has not yet been
+visually checked on a Retroid. The screenshots below show the preceding
+v1.5.2 layout.
+
 The exact v1.5.2 APK was built and signed on Windows without a connected
-Retroid. Its compact layout and dependent-control behavior still need a
-physical screen and interaction check.
+Retroid during the release round. The maintainer subsequently supplied two
+Flip 2 screenshots of v1.5.2: [Right away](../assets/screenshots/flip2-v1.5.2-right-away.png)
+and [charging toward 80%](../assets/screenshots/flip2-v1.5.2-charging-to-80.png).
+They show the compact layout, selected modes, and a `Charging` state at 17%
+with an 80% stop and user-set 65% resume level. They do not show the actual
+stop/resume transitions or prove the dependent controls cannot be changed while
+bypass is off.
 
 ## Community compatibility reports
 
