@@ -14,8 +14,11 @@
 - Verified signing scheme: APK Signature Scheme v3.
 
 The Java version and charge-limit policy tests, Android build, ZIP alignment,
-package/version inspection, and APK signature verification passed. The
-end-to-end in-app update is pending release availability on the Flip 2.
+package/version inspection, and APK signature verification passed. After
+publication, an updater-enabled v1.5.5 test build on the Flip 2 found and
+installed the published v1.5.6 APK through Android's confirmation flow. The
+installed package reported version code 27; native bypass stayed at `10/10`
+and `Not charging` on USB, with the foreground service and notification active.
 
 ## 1.5.5 shared dashboard/status card
 

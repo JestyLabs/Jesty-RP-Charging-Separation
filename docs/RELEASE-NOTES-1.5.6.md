@@ -18,8 +18,13 @@ receiver can resume an enabled bypass when USB is connected.
   verification passed.
 - The exact signed APK is version `1.5.6` (`versionCode 27`) and uses the
   existing signing certificate.
-- The first end-to-end in-app update on a Retroid device is pending after the
-  release becomes available to the installed v1.5.5 app.
+- After publication, an updater-enabled v1.5.5 test build on a Flip 2 found
+  the stable v1.5.6 release. The user permission step, APK download and checks,
+  Android confirmation, and installation completed. The installed package
+  reported `1.5.6` (`versionCode 27`); the bypass service and notification
+  resumed with native limit `10/10` and `Not charging` on USB.
+- The public v1.5.5 build did not contain an updater. The test build used its
+  version number with the v1.5.6 updater code to exercise this upgrade path.
 
 ## APK
 

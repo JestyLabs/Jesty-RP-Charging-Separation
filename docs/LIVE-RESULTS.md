@@ -1,5 +1,14 @@
 # Live validation status
 
+The published v1.5.6 APK was installed on a Flip 2 through the new in-app
+updater, starting from an updater-enabled v1.5.5 test build (the public v1.5.5
+did not include the updater). GitHub release discovery, install-source
+permission, APK download and verification, Android confirmation, and the
+in-place update completed. The installed package reported v1.5.6/code 27.
+With USB connected, the native limit remained `10/10`, battery status was
+`Not charging`, and the foreground service and notification were active. The
+app showed `RUNNING FROM USB`. This test covers the Flip 2, not other models.
+
 The v1.5.5 shared dashboard/status card was visually checked on a Flip 2 with
 the exact signed stable APK installed in place. The screenshots below show the
 preceding v1.5.2 layout. Process recovery and explicit OFF were also checked
