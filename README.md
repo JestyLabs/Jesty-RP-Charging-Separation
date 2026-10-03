@@ -195,6 +195,9 @@ Android's installer. Android asks for final confirmation; the first time it
 also asks you to allow this app to install apps. Settings are kept, and bypass
 charging resumes after the update if it was on and USB is connected.
 
+Versions before 1.5.6 do not have the in-app updater. Install 1.5.6 manually
+once; later stable releases can be offered inside the app.
+
 <details>
 <summary><strong>Technical implementation</strong></summary>
 

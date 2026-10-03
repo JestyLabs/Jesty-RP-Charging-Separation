@@ -11,6 +11,9 @@ Android asks for installation permission and final confirmation. Saved bypass
 settings are preserved during an in-place update; the existing package-replaced
 receiver can resume an enabled bypass when USB is connected.
 
+Public versions before 1.5.6 do not have this updater. Install 1.5.6 manually
+once; later stable releases can be offered inside the app.
+
 ## Verification
 
 - Java version and charge-limit policy tests passed.
