@@ -20,6 +20,10 @@ The v1.5.3 charging status placement immediately above the LIVE DASHBOARD was
 visually checked on a wide Flip 2 screen using v1.5.4-rc1. The narrow-screen
 placement still needs checking. The v1.5.2 screenshots predate this change.
 
+For v1.5.5, the status is inside the same LIVE DASHBOARD card, beside its title
+and device line on a wide Flip 2 screen. The narrow-screen layout still needs
+checking.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.

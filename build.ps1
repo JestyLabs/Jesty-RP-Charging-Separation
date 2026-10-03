@@ -4,7 +4,7 @@ param(
     [string]$JdkHome,
     [string]$Keystore,
     [string]$KeyAlias,
-    [string]$OutputName = 'Jesty-RP-Charging-Separation-1.5.4'
+    [string]$OutputName = 'Jesty-RP-Charging-Separation-1.5.5'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -91,7 +91,7 @@ $flatFiles = Get-ChildItem -LiteralPath $compiled -Filter '*.flat' -File |
     Select-Object -ExpandProperty FullName
 & $aapt2 link -o $resourceApk -I $androidJar --manifest (Join-Path $projectRoot 'AndroidManifest.xml') `
     --java $generated --min-sdk-version 28 --target-sdk-version 28 `
-    --version-code 24 --version-name '1.5.4' $flatFiles
+    --version-code 26 --version-name '1.5.5' $flatFiles
 if ($LASTEXITCODE -ne 0) { throw 'aapt2 link failed.' }
 
 $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'src') -Recurse -Filter '*.java' -File |

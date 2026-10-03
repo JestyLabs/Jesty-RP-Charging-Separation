@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.5
+
+- Place the charging status inside the wide LIVE DASHBOARD card, beside its
+  title and device line. Give that shared header more vertical room. Visually
+  checked on a Retroid Pocket Flip 2.
+
 ## 1.5.4
 
 - Promoted the process-recovery and dock-settling changes from 1.5.4-rc1 to

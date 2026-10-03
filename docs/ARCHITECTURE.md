@@ -5,7 +5,7 @@
 `MainActivity` owns only the dashboard, user switches, and one-second telemetry
 refresh while visible. The left controls share one panel. The live dashboard
 is anchored at the bottom right on wide landscape screens, with charging status
-in a compact panel directly above it. On narrower screens, status stays above
+beside its title and device line inside the same card. On narrower screens, status stays above
 the controls and the dashboard stacks beneath them. When bypass is off,
 dependent controls are disabled, reboot persistence is cleared, and the
 selected mode and two saved

@@ -1,5 +1,23 @@
 # Release integrity
 
+## 1.5.5 shared dashboard/status card
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `26`
+- Version name: `1.5.5`
+- APK: `Jesty-RP-Charging-Separation-1.5.5.apk`
+- Signed APK size: `6,058,927` bytes
+- Signed APK SHA-256:
+  `E44CEADB5D72EA4A139943B948A3FFA075B258A817023198654A3FDCC3DA2623`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java policy test, Android build, ZIP alignment and APK signature passed.
+The exact stable APK installed in place on a Flip 2; the shared card was
+visually checked while native separation remained active (`10/10`,
+`Not charging`).
+
 ## 1.5.4 process recovery
 
 - Package: `com.jesty.rpchargingseparation`

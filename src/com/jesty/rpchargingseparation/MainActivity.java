@@ -212,33 +212,16 @@ public final class MainActivity extends Activity {
         controls.addView(autoBootToggle, bootParams);
         content.addView(controls);
 
-        LinearLayout dashboard = buildDashboard();
+        LinearLayout dashboard = buildDashboard(wide);
         if (wide) {
-            LinearLayout rightColumn = new LinearLayout(this);
-            rightColumn.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout statusPanel = new LinearLayout(this);
-            statusPanel.setOrientation(LinearLayout.VERTICAL);
-            statusPanel.setPadding(dp(12), dp(8), dp(12), dp(8));
-            statusPanel.setBackground(roundedPanel(0xB3100B19, 0x88B15BFF));
-            stateDetail.setPadding(0, dp(2), 0, 0);
-            statusPanel.addView(stateText);
-            statusPanel.addView(stateDetail);
-            LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
-            statusParams.setMargins(0, 0, 0, dp(8));
-            rightColumn.addView(statusPanel, statusParams);
             dashboard.setBackground(roundedPanel(0xB3100B19, 0x88B15BFF));
-            dashboard.setPadding(dp(12), dp(10), dp(12), dp(10));
-            rightColumn.addView(dashboard, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            dashboard.setPadding(dp(12), dp(14), dp(12), dp(12));
             int width = Math.round(metrics.widthPixels * 0.46f);
             FrameLayout.LayoutParams dashboardParams = new FrameLayout.LayoutParams(
                     width, ViewGroup.LayoutParams.WRAP_CONTENT,
                     Gravity.END | Gravity.BOTTOM);
             dashboardParams.setMargins(0, 0, dp(18), dp(18));
-            root.addView(rightColumn, dashboardParams);
+            root.addView(dashboard, dashboardParams);
         } else {
             content.addView(dashboard);
         }
@@ -544,18 +527,50 @@ public final class MainActivity extends Activity {
         limitNote.setVisibility(note == null ? View.GONE : View.VISIBLE);
     }
 
-    private LinearLayout buildDashboard() {
+    private LinearLayout buildDashboard(boolean wide) {
         LinearLayout dashboard = new LinearLayout(this);
         dashboard.setOrientation(LinearLayout.VERTICAL);
 
+        LinearLayout titleBlock = new LinearLayout(this);
+        titleBlock.setOrientation(LinearLayout.VERTICAL);
         TextView heading = text("LIVE DASHBOARD", 11f, YELLOW, true);
         heading.setLetterSpacing(0.12f);
         heading.setPadding(dp(4), 0, 0, dp(4));
-        dashboard.addView(heading);
+        titleBlock.addView(heading);
 
         diagnostic = text("", 11f, MUTED, false);
-        diagnostic.setPadding(dp(4), 0, 0, dp(7));
-        dashboard.addView(diagnostic);
+        diagnostic.setPadding(dp(4), 0, 0, 0);
+        titleBlock.addView(diagnostic);
+
+        if (wide) {
+            LinearLayout header = new LinearLayout(this);
+            header.setOrientation(LinearLayout.HORIZONTAL);
+            header.setGravity(Gravity.TOP);
+            header.setMinimumHeight(dp(64));
+            header.addView(titleBlock, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+            LinearLayout status = new LinearLayout(this);
+            status.setOrientation(LinearLayout.VERTICAL);
+            status.setPadding(dp(8), 0, 0, 0);
+            stateText.setTextSize(16f);
+            stateText.setGravity(Gravity.END);
+            stateDetail.setTextSize(11f);
+            stateDetail.setGravity(Gravity.END);
+            stateDetail.setPadding(0, dp(3), 0, 0);
+            status.addView(stateText);
+            status.addView(stateDetail);
+            header.addView(status, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            headerParams.setMargins(0, 0, 0, dp(10));
+            dashboard.addView(header, headerParams);
+        } else {
+            titleBlock.setPadding(0, 0, 0, dp(7));
+            dashboard.addView(titleBlock);
+        }
 
         LinearLayout row1 = row();
         batteryValue = addCard(row1, "BATTERY");

@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.4"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.5"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -80,9 +80,9 @@ screen shows a user-set 65% charge-again level. They confirm the screen layout
 and displayed charging-to-limit state on the device; they do not show the
 transition at 80% or the later resume at 65%.
 
-From v1.5.3, the charging status sits directly above the live dashboard on
-wide landscape screens. This placement was visually checked on a Flip 2 with
-the v1.5.4 testing build; the narrow-screen layout remains to be checked.
+In v1.5.5, the charging status shares the LIVE DASHBOARD card on wide
+landscape screens, beside its title and device line. This layout was visually
+checked on a Flip 2; the narrow-screen layout remains to be checked.
 
 <p align="center">
   <img src="assets/screenshots/flip2-v1.5.2-right-away.png" alt="v1.5.2 Right away mode on Retroid Pocket Flip 2" width="760">
@@ -160,8 +160,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.5.4.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.4).
+1. Download `Jesty-RP-Charging-Separation-1.5.5.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.5).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.
