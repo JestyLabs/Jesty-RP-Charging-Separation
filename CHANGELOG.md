@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.4-rc1 (device validation candidate)
+
+- Reattach a restarted foreground service to Retroid's existing native bypass
+  state and recover automatic charge-limit hysteresis after process death.
+- Persist the user's switch choice before starting or stopping the service.
+  On reopen, reconcile it with the native charge limit.
+- Keep the sustained-discharge safety stop and show its reason in the app.
+  Add lifecycle logs to distinguish that stop from Android process death and
+  the vendor launcher's Force Stop behavior.
+- Allow USB/dock power status to settle before applying and confirming native
+  separation, avoiding an immediate false failure while a dock negotiates.
+
 ## 1.5.3
 
 - Moved the current charging status from the left controls to a compact panel

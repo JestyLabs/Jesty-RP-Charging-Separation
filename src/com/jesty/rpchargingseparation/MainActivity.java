@@ -54,6 +54,7 @@ public final class MainActivity extends Activity {
     private ImageView backgroundImage;
     private boolean visualSeparated;
     private boolean suppressToggle;
+    private boolean offReconcileStarted;
     private Boolean controlsEnabled;
     private Switch separationToggle;
     private Switch autoBootToggle;
@@ -102,12 +103,21 @@ public final class MainActivity extends Activity {
 
         separationToggle.setOnCheckedChangeListener((button, checked) -> {
             if (suppressToggle) return;
-            SharedPreferences.Editor settings = prefs.edit().putBoolean("desired_enabled", checked);
+            SharedPreferences.Editor settings = prefs.edit()
+                    .putBoolean("desired_enabled", checked)
+                    .remove(BypassService.PREF_LAST_SAFETY_STOP);
             if (!checked) {
                 settings.putBoolean("auto_on_boot", false);
                 autoBootToggle.setChecked(false);
             }
-            settings.apply();
+            if (!settings.commit()) {
+                Toast.makeText(this, "Could not save bypass setting", Toast.LENGTH_LONG).show();
+                suppressToggle = true;
+                separationToggle.setChecked(!checked);
+                suppressToggle = false;
+                return;
+            }
+            offReconcileStarted = !checked;
             setControlsEnabled(checked);
             Intent service = new Intent(this, BypassService.class)
                     .setAction(checked
@@ -684,7 +694,24 @@ public final class MainActivity extends Activity {
     private void readAndRender() {
         try {
             PowerTelemetry telemetry = PowerTelemetry.read();
-            runOnUiThread(() -> render(telemetry));
+            runOnUiThread(() -> {
+                // If a previous process died after native separation was enabled,
+                // an OFF preference must still restore normal charging on reopen.
+                if (!prefs.getBoolean("desired_enabled", false) && telemetry.limit == 0) {
+                    offReconcileStarted = false;
+                }
+                if (!prefs.getBoolean("desired_enabled", false)
+                        && telemetry.limit != 0 && !offReconcileStarted
+                        && (BypassService.state() == BypassService.State.OFF
+                        || BypassService.state() == BypassService.State.FAILED)) {
+                    offReconcileStarted = true;
+                    Intent restore = new Intent(this, BypassService.class)
+                            .setAction(BypassService.ACTION_DISABLE);
+                    if (Build.VERSION.SDK_INT >= 26) startForegroundService(restore);
+                    else startService(restore);
+                }
+                render(telemetry);
+            });
         } catch (Throwable error) {
             runOnUiThread(() -> {
                 stateText.setText("NO POWER READINGS");
@@ -696,29 +723,47 @@ public final class MainActivity extends Activity {
 
     private void render(PowerTelemetry telemetry) {
         BypassService.State serviceState = BypassService.state();
-        boolean active = serviceState == BypassService.State.ACTIVE
-                && telemetry.separationConfirmed();
-        setSeparationVisual(active);
         boolean desired = prefs.getBoolean("desired_enabled", false);
+        boolean nativeSeparated = telemetry.separationConfirmed();
+        boolean active = desired && serviceState == BypassService.State.ACTIVE
+                && nativeSeparated;
+        setSeparationVisual(active);
         suppressToggle = true;
         separationToggle.setChecked(desired);
         suppressToggle = false;
         setControlsEnabled(desired);
 
         String detail = BypassService.detail();
-        if (active) {
+        String safetyStop = prefs.getString(BypassService.PREF_LAST_SAFETY_STOP, null);
+        if (!desired && telemetry.limit != 0) {
+            if (serviceState == BypassService.State.FAILED) {
+                setState("COULD NOT START", ERROR);
+            } else {
+                setState("TURNING OFF...", YELLOW);
+                detail = "Restoring normal charging";
+            }
+        } else if (!desired && safetyStop != null) {
+            setState("COULD NOT START", ERROR);
+            detail = safetyStop + ". Bypass was turned off for safety.";
+        } else if (active) {
             setState("RUNNING FROM USB", YELLOW);
-        } else if (serviceState == BypassService.State.CHARGING_TO_LIMIT) {
+        } else if (desired && nativeSeparated) {
+            setState("STARTING...", YELLOW);
+            detail = "Native bypass active; restoring monitoring";
+        } else if (desired && serviceState == BypassService.State.CHARGING_TO_LIMIT) {
             setState(String.format(Locale.US, "CHARGING TO %d%%",
                     BypassService.limitPercent(prefs)), Color.WHITE);
-        } else if (serviceState == BypassService.State.ENABLING) {
+        } else if (desired && serviceState == BypassService.State.ENABLING) {
             setState("STARTING...", YELLOW);
-        } else if (serviceState == BypassService.State.ARMED
-                || (desired && !telemetry.usbPresent)) {
+        } else if (desired && (serviceState == BypassService.State.ARMED
+                || !telemetry.usbPresent)) {
             setState("READY", YELLOW);
             detail = "Plug in USB to start";
-        } else if (serviceState == BypassService.State.FAILED) {
+        } else if (desired && serviceState == BypassService.State.FAILED) {
             setState("COULD NOT START", ERROR);
+        } else if (desired) {
+            setState("STARTING...", YELLOW);
+            detail = "Restoring bypass monitoring";
         } else if (!telemetry.usbPresent) {
             setState("ON BATTERY", MUTED);
         } else {
