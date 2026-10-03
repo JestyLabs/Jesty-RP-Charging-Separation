@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.4
+
+- Promoted the process-recovery and dock-settling changes from 1.5.4-rc1 to
+  the stable release, with `versionCode 24` for an in-place update.
+- On a Flip 2, a controlled process crash restarted the foreground service and
+  reattached to the native bypass; explicit OFF restored normal charging.
+- The RP5 dock settling change still needs a device retest. The Flip 2 vendor
+  launcher was observed invoking Android Force Stop from Recents, which prevents
+  automatic service restart until the app is opened.
+
 ## 1.5.4-rc1 (device validation candidate)
 
 - Reattach a restarted foreground service to Retroid's existing native bypass

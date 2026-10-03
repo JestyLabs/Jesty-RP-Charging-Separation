@@ -1,5 +1,22 @@
 # Release integrity
 
+## 1.5.4 process recovery
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `24`
+- Version name: `1.5.4`
+- APK: `Jesty-RP-Charging-Separation-1.5.4.apk`
+- Signed APK size: `6,058,927` bytes
+- Signed APK SHA-256:
+  `00006BEB9C938CE3AADB77BCEBC1C15B3C6B977DC5F9F974E668F11A258B8F45`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The charge-limit policy test, Android build and signature verification passed.
+The 1.5.4-rc1 behavior was tested on a Flip 2; this exact stable APK was not
+installed before the device disconnected from ADB.
+
 ## Current 1.3.0 signed candidate
 
 - Package: `com.jesty.rpchargingseparation`

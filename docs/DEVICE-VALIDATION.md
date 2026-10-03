@@ -16,9 +16,9 @@ turning it off clears reboot persistence but remembers the selected mode;
 turning it back on restores the same mode; and the LIVE DASHBOARD is visible
 near the controls at the bottom right on wide landscape screens.
 
-For v1.5.3, verify that the charging status appears immediately above the LIVE
-DASHBOARD on a wide landscape screen and remains above the controls on a narrow
-screen. The v1.5.2 screenshots predate this placement change.
+The v1.5.3 charging status placement immediately above the LIVE DASHBOARD was
+visually checked on a wide Flip 2 screen using v1.5.4-rc1. The narrow-screen
+placement still needs checking. The v1.5.2 screenshots predate this change.
 
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.

@@ -1,8 +1,9 @@
 # Live validation status
 
-The v1.5.3 status relocation has been built on Windows but has not yet been
-visually checked on a Retroid. The screenshots below show the preceding
-v1.5.2 layout.
+The v1.5.3 status placement was visually checked on a Flip 2 with the
+v1.5.4-rc1 testing build. The screenshots below show the preceding v1.5.2
+layout. Process recovery and explicit OFF were also checked on the Flip 2;
+see [process recovery](PROCESS-RECOVERY.md) for the observations and limits.
 
 The exact v1.5.2 APK was built and signed on Windows without a connected
 Retroid during the release round. The maintainer subsequently supplied two
