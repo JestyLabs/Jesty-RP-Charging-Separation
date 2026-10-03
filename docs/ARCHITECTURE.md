@@ -33,7 +33,11 @@ level (default 70%, always at least five points below the stop level).
 
 It validates the native controls, performs privileged writes, confirms
 readback/status, and samples telemetry every two seconds while active, charging
-to the limit, or armed.
+to the limit, or armed. When a dock first reports USB present but the battery
+still says Discharging, the service waits briefly for power negotiation before
+writing the native limit. It also allows a short settling period for the
+post-write `Not charging` status; a persistent mismatch still restores normal
+charging and reports failure.
 
 ## Privileged transport
 
@@ -47,6 +51,21 @@ construct that vendor String-array Parcel.
 The desired state, separation mode, stop level, charge-again level, and boot
 preference are stored in private SharedPreferences. A saved 1.5.0-rc1 resume
 margin is migrated to an equivalent charge-again level when first read.
+The main switch commits its desired state before starting the service. After a
+process death, Android's sticky foreground-service restart reads that saved
+state. If Retroid's native control is already in separation mode, the service
+adopts it and reconstructs automatic-limit hysteresis from the native reading;
+it does not reset a stopped-at-80% session to normal charging merely because
+its in-memory flag was lost. Reopening the app reads the native control before
+showing the state, and an OFF preference restores a leftover native limit.
+
+Three consecutive samples below -300 mA while separated still trigger the
+existing safety shutdown: normal charging is restored, desired state is set
+OFF, and the reason is retained for the dashboard. This is a deliberate safety
+stop, distinct from a process death. A normal service teardown also restores
+normal charging. Removing the task from Recents only produces a diagnostic log;
+it does not disable the foreground service. No receiver or alarm tries to
+restart the app after Android Settings -> Force stop.
 `BootReceiver` starts the service after a normal boot only when boot restoration
 was explicitly enabled. Android Settings -> Force stop suppresses this behavior
 until the app is opened again.

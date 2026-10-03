@@ -30,6 +30,7 @@ public final class BypassService extends Service {
     static final String MODE_AUTO_LIMIT = "auto_limit";
     static final String PREF_LIMIT_PERCENT = "limit_percent";
     static final String PREF_RESUME_PERCENT = "resume_percent";
+    static final String PREF_LAST_SAFETY_STOP = "last_safety_stop";
     // Pre-release builds stored a margin instead of an absolute resume level.
     private static final String LEGACY_PREF_RESUME_MARGIN = "resume_margin";
     static final int DEFAULT_LIMIT_PERCENT = 80;
@@ -98,10 +99,13 @@ public final class BypassService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent == null
-                ? (prefs.getBoolean("desired_enabled", false) ? ACTION_ENABLE : ACTION_DISABLE)
-                : intent.getAction();
-        if (ACTION_ENABLE.equals(action)) {
+        boolean desired = prefs.getBoolean("desired_enabled", false);
+        String action = intent == null ? "sticky restart" : intent.getAction();
+        Log.i(TAG, "Service start: " + action + ", desired=" + desired
+                + ", flags=" + flags);
+        // The saved user choice is authoritative, including for a sticky restart
+        // with a null intent or an old ENABLE intent delivered after an OFF.
+        if (desired) {
             state = State.ENABLING;
             detail = "Checking hardware...";
             startForeground(NOTIFICATION_ID, notification(detail));
@@ -116,16 +120,53 @@ public final class BypassService extends Service {
     private void enableSafely() {
         try {
             stopping.set(false);
+            if (!prefs.getBoolean("desired_enabled", false)) {
+                disableSafely("Bypass charging is off", true);
+                return;
+            }
             requireSupportedDevice();
             PowerTelemetry before = PowerTelemetry.read();
             if (!before.usbPresent) {
+                if (before.limit != 0) restoreAndConfirm();
                 state = State.ARMED;
                 detail = "Plug in USB to start";
                 updateNotification(detail);
                 ensureMonitor();
                 return;
             }
+            // USB can appear before a dock finishes negotiating power. Do not
+            // treat its initial Discharging/Unknown status as a hardware failure.
+            for (int attempt = 0; attempt < 10 && before.usbPresent
+                    && !powerReady(before); attempt++) {
+                detail = "Waiting for charger...";
+                updateNotification(detail);
+                Thread.sleep(1000L);
+                before = PowerTelemetry.read();
+            }
+            if (!prefs.getBoolean("desired_enabled", false)) {
+                disableSafely("Bypass charging is off", true);
+                return;
+            }
+            if (!before.usbPresent) {
+                if (before.limit != 0) restoreAndConfirm();
+                state = State.ARMED;
+                detail = "Plug in USB to start";
+                updateNotification(detail);
+                ensureMonitor();
+                return;
+            }
+            if (!powerReady(before)) {
+                throw new IllegalStateException("Charger did not settle: "
+                        + before.batteryStatus);
+            }
             if (before.limitMax <= 0) throw new IllegalStateException("Invalid native limit");
+            if (before.limit != 0 && before.limit != before.limitMax) {
+                throw new IllegalStateException("Unexpected native limit: " + before.limit);
+            }
+
+            // A process restart loses the in-memory hysteresis flag. The native
+            // Retroid setting tells us whether the stop level was already reached.
+            if (autoLimitMode(prefs) && before.nativeIdleMode()) limitReached = true;
 
             if (shouldChargeToLimit(before)) {
                 enterLimitCharging(before);
@@ -133,13 +174,26 @@ public final class BypassService extends Service {
             }
 
             prefs.edit().putBoolean("requested", true).apply();
-            RootBridge.exec("chmod 644 " + PowerTelemetry.LIMIT);
-            RootBridge.exec("echo " + before.limitMax + " > " + PowerTelemetry.LIMIT);
-            RootBridge.exec("chmod 444 " + PowerTelemetry.LIMIT);
-
-            Thread.sleep(1500L);
-            PowerTelemetry after = PowerTelemetry.read();
-            if (after.limit != after.limitMax
+            PowerTelemetry after = before;
+            if (!before.nativeIdleMode()) {
+                RootBridge.exec("chmod 644 " + PowerTelemetry.LIMIT);
+                RootBridge.exec("echo " + before.limitMax + " > " + PowerTelemetry.LIMIT);
+                RootBridge.exec("chmod 444 " + PowerTelemetry.LIMIT);
+                Thread.sleep(1500L);
+                after = PowerTelemetry.read();
+            }
+            for (int attempt = 0; attempt < 8 && after.usbPresent
+                    && after.limit == after.limitMax && !after.nativeIdleMode(); attempt++) {
+                detail = "Confirming bypass...";
+                updateNotification(detail);
+                Thread.sleep(1000L);
+                after = PowerTelemetry.read();
+            }
+            if (!prefs.getBoolean("desired_enabled", false)) {
+                disableSafely("Bypass charging is off", true);
+                return;
+            }
+            if (!after.usbPresent || after.limit != after.limitMax
                     || !"Not charging".equalsIgnoreCase(after.batteryStatus)) {
                 throw new IllegalStateException("Validation failed: limit " + after.limit + "/"
                         + after.limitMax + ", status " + after.batteryStatus);
@@ -147,6 +201,9 @@ public final class BypassService extends Service {
 
             state = State.ACTIVE;
             limitReached = autoLimitMode(prefs);
+            Log.i(TAG, before.nativeIdleMode()
+                    ? "Reattached to existing native separation"
+                    : "Enabled and verified native separation");
             detail = autoLimitMode(prefs)
                     ? String.format(Locale.US,
                             "Stopped at %d%% - charges again at %d%%",
@@ -168,6 +225,12 @@ public final class BypassService extends Service {
         return ChargeLimitPolicy.shouldChargeToLimit(autoLimitMode(prefs),
                 telemetry.batteryPercent, limitPercent(prefs), resumePercent(prefs),
                 limitReached);
+    }
+
+    private static boolean powerReady(PowerTelemetry telemetry) {
+        return "Charging".equalsIgnoreCase(telemetry.batteryStatus)
+                || "Full".equalsIgnoreCase(telemetry.batteryStatus)
+                || "Not charging".equalsIgnoreCase(telemetry.batteryStatus);
     }
 
     private void enterLimitCharging(PowerTelemetry telemetry) throws Exception {
@@ -236,7 +299,11 @@ public final class BypassService extends Service {
             if (telemetry.batteryCurrentUa < -300_000L) unsafeSamples++;
             else unsafeSamples = 0;
             if (unsafeSamples >= 3) {
-                prefs.edit().putBoolean("desired_enabled", false).apply();
+                Log.w(TAG, "Safety stop: battery powering device at "
+                        + telemetry.batteryCurrentUa + " uA while USB is present");
+                prefs.edit().putString(PREF_LAST_SAFETY_STOP,
+                        "Battery was powering the device")
+                        .putBoolean("desired_enabled", false).commit();
                 disableSafely("Battery was powering the device", true);
                 return;
             }
@@ -344,7 +411,15 @@ public final class BypassService extends Service {
     }
 
     @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.i(TAG, "Task removed; no change to bypass requested");
+        super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
     public void onDestroy() {
+        Log.i(TAG, "Service destroyed: state=" + state + ", desired="
+                + prefs.getBoolean("desired_enabled", false));
         if (state == State.ACTIVE || state == State.ENABLING) {
             disableSafely("Service stopped", false);
         }
