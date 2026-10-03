@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.6
+
+- Add an in-app update prompt and UPDATE button for newer stable GitHub releases.
+- Download only the release APK after user confirmation. Check its size, GitHub
+  SHA-256 digest, package, version code, and signing certificate before handing
+  it to Android's installer for final confirmation.
+- Resume a previously enabled bypass after the package is replaced when USB is
+  connected, using the existing package-replaced receiver.
+
 ## 1.5.5
 
 - Place the charging status inside the wide LIVE DASHBOARD card, beside its

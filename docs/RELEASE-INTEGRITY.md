@@ -1,5 +1,22 @@
 # Release integrity
 
+## 1.5.6 in-app updates
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `27`
+- Version name: `1.5.6`
+- APK: `Jesty-RP-Charging-Separation-1.5.6.apk`
+- Signed APK size: `6,067,119` bytes
+- Signed APK SHA-256:
+  `8CA5D7B3BBF41A337BC5F27CE38956C9B3857F5759F5D2007268B6F5B8AE6A7B`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java version and charge-limit policy tests, Android build, ZIP alignment,
+package/version inspection, and APK signature verification passed. The
+end-to-end in-app update is pending release availability on the Flip 2.
+
 ## 1.5.5 shared dashboard/status card
 
 - Package: `com.jesty.rpchargingseparation`

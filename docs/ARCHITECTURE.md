@@ -39,6 +39,26 @@ writing the native limit. It also allows a short settling period for the
 post-write `Not charging` status; a persistent mismatch still restores normal
 charging and reports failure.
 
+## In-app updates
+
+`AppUpdater` reads `GET /repos/JestyLabs/Jesty-RP-Charging-Separation/releases/latest`
+when the Activity opens, at most once an hour, and caches the last result so
+the top-bar **UPDATE** button can reappear without a new request. Drafts,
+pre-releases, unparseable tags, and assets without a GitHub `sha256:` digest or
+outside this repository's `releases/download/<tag>/` path are ignored.
+`UpdateVersion` holds the Android-free version comparison and URL/digest checks
+covered by `scripts/test-update-version.ps1`.
+
+An update is only downloaded after the user taps **Update**. The APK is written
+to the app cache, checked against the published size and SHA-256, and parsed to
+confirm the package name, a higher `versionCode`, and a signing certificate the
+installed app already has. It is then committed through a `PackageInstaller`
+session; `UpdateInstallReceiver` shows Android's confirmation screen and
+reports failures. Android remains the final authority on the signature. The
+`REQUEST_INSTALL_PACKAGES` permission requires the user to allow this app as an
+install source once. Replacing the package kills the process;
+`MY_PACKAGE_REPLACED` lets `BootReceiver` resume a desired bypass afterwards.
+
 ## Privileged transport
 
 `RootBridge` obtains Retroid's `PServerBinder` from `ServiceManager`, serializes

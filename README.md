@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.5"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.6"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -49,6 +49,8 @@ running device.
 - Verifies that separation actually activated before reporting success.
 - Restores normal charging if validation or safety telemetry fails.
 - Optional restore after a normal reboot.
+- In-app updates: an **UPDATE** button appears next to SUPPORT and GITHUB when a
+  newer stable release is published, and installs it after you confirm.
 - Does not change CPU governors, CPU frequencies, or unrelated Android settings.
 
 The app uses Retroid's own `PServerBinder` bridge. It does not physically
@@ -160,8 +162,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.5.5.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.5).
+1. Download `Jesty-RP-Charging-Separation-1.5.6.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.6).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.
@@ -179,6 +181,19 @@ path.
 
 The service uses lightweight periodic telemetry and no busy loop. Turning the
 toggle off, or a safety failure, restores normal charging.
+
+### Updates
+
+When the app is opened it asks GitHub, at most once an hour, for this
+repository's latest stable release (pre-releases are ignored). This is the only
+background network request the app makes and it sends no telemetry. If a newer version
+exists, an **UPDATE** button appears in the top bar and the app asks once
+whether to install it. Updating downloads the release APK, checks its size and
+the SHA-256 digest that GitHub publishes for the asset, confirms it is a newer
+build of the same app signed with the same certificate, and passes it to
+Android's installer. Android asks for final confirmation; the first time it
+also asks you to allow this app to install apps. Settings are kept, and bypass
+charging resumes after the update if it was on and USB is connected.
 
 <details>
 <summary><strong>Technical implementation</strong></summary>

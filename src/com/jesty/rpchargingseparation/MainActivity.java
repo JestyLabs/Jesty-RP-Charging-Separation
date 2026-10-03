@@ -50,6 +50,8 @@ public final class MainActivity extends Activity {
     private static final int STEP_PERCENT = 5;
 
     private ScheduledExecutorService telemetryWorker;
+    private AppUpdater updater;
+    private TextView updateAction;
     private SharedPreferences prefs;
     private ImageView backgroundImage;
     private boolean visualSeparated;
@@ -137,6 +139,18 @@ public final class MainActivity extends Activity {
 
         telemetryWorker = Executors.newSingleThreadScheduledExecutor();
         telemetryWorker.scheduleAtFixedRate(this::readAndRender, 0L, 1L, TimeUnit.SECONDS);
+
+        updater = new AppUpdater(this, version -> {
+            updateAction.setText("\u2191  UPDATE v" + version);
+            updateAction.setVisibility(View.VISIBLE);
+        });
+        updater.start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (updater != null) updater.onResume();
     }
 
     private View buildUi() {
@@ -590,6 +604,23 @@ public final class MainActivity extends Activity {
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setGravity(Gravity.CENTER_VERTICAL);
 
+        // Only shown once AppUpdater finds a newer stable release.
+        updateAction = topAction("\u2191  UPDATE");
+        updateAction.setTextColor(Color.rgb(36, 19, 56));
+        GradientDrawable highlight = new GradientDrawable();
+        highlight.setColor(YELLOW);
+        highlight.setCornerRadius(dp(21));
+        updateAction.setBackground(highlight);
+        updateAction.setFocusable(true);
+        updateAction.setVisibility(View.GONE);
+        updateAction.setOnClickListener(v -> {
+            if (updater != null) updater.promptUpdate();
+        });
+        LinearLayout.LayoutParams updateParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(38));
+        updateParams.setMargins(0, 0, dp(8), 0);
+        actions.addView(updateAction, updateParams);
+
         TextView support = topAction("\u2615  SUPPORT");
         support.setOnClickListener(v -> openExternal("https://buymeacoffee.com/jesty"));
         actions.addView(support);
@@ -828,6 +859,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (telemetryWorker != null) telemetryWorker.shutdownNow();
+        if (updater != null) updater.shutdown();
         super.onDestroy();
     }
 }
