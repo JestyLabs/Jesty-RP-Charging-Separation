@@ -172,7 +172,7 @@ public final class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        // The live dashboard gets its own right-hand column on wide landscape screens;
+        // The live panel gets its own right-hand column on wide landscape screens;
         // narrower screens keep it stacked under the controls.
         boolean wide = metrics.widthPixels / metrics.density >= 640f
                 && metrics.widthPixels >= metrics.heightPixels * 1.5f;
@@ -545,45 +545,59 @@ public final class MainActivity extends Activity {
         LinearLayout dashboard = new LinearLayout(this);
         dashboard.setOrientation(LinearLayout.VERTICAL);
 
-        LinearLayout titleBlock = new LinearLayout(this);
-        titleBlock.setOrientation(LinearLayout.VERTICAL);
-        TextView heading = text("LIVE DASHBOARD", 11f, YELLOW, true);
+        TextView heading = text("LIVE", 11f, YELLOW, true);
         heading.setLetterSpacing(0.12f);
-        heading.setPadding(dp(4), 0, 0, dp(4));
-        titleBlock.addView(heading);
+        heading.setPadding(dp(4), 0, 0, 0);
 
         diagnostic = text("", 11f, MUTED, false);
         diagnostic.setPadding(dp(4), 0, 0, 0);
-        titleBlock.addView(diagnostic);
 
         if (wide) {
             LinearLayout header = new LinearLayout(this);
-            header.setOrientation(LinearLayout.HORIZONTAL);
-            header.setGravity(Gravity.TOP);
-            header.setMinimumHeight(dp(64));
-            header.addView(titleBlock, new LinearLayout.LayoutParams(0,
+            header.setOrientation(LinearLayout.VERTICAL);
+
+            LinearLayout titleRow = new LinearLayout(this);
+            titleRow.setOrientation(LinearLayout.HORIZONTAL);
+            titleRow.setGravity(Gravity.CENTER_VERTICAL);
+            titleRow.addView(heading, new LinearLayout.LayoutParams(0,
                     ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-            LinearLayout status = new LinearLayout(this);
-            status.setOrientation(LinearLayout.VERTICAL);
-            status.setPadding(dp(8), 0, 0, 0);
-            stateText.setTextSize(16f);
+            stateText.setTextSize(14f);
             stateText.setGravity(Gravity.END);
+            LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            stateParams.setMargins(dp(8), 0, dp(4), 0);
+            titleRow.addView(stateText, stateParams);
+            header.addView(titleRow);
+
+            LinearLayout.LayoutParams deviceParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            deviceParams.setMargins(0, dp(5), 0, 0);
+            header.addView(diagnostic, deviceParams);
+
             stateDetail.setTextSize(11f);
-            stateDetail.setGravity(Gravity.END);
-            stateDetail.setPadding(0, dp(3), 0, 0);
-            status.addView(stateText);
-            status.addView(stateDetail);
-            header.addView(status, new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            stateDetail.setGravity(Gravity.START);
+            stateDetail.setPadding(dp(4), 0, dp(4), 0);
+            LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            detailParams.setMargins(0, dp(2), 0, 0);
+            header.addView(stateDetail, detailParams);
+
             LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             headerParams.setMargins(0, 0, 0, dp(10));
             dashboard.addView(header, headerParams);
         } else {
-            titleBlock.setPadding(0, 0, 0, dp(7));
-            dashboard.addView(titleBlock);
+            dashboard.addView(heading);
+            LinearLayout.LayoutParams deviceParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            deviceParams.setMargins(0, dp(4), 0, dp(7));
+            dashboard.addView(diagnostic, deviceParams);
         }
 
         LinearLayout row1 = row();
@@ -621,17 +635,19 @@ public final class MainActivity extends Activity {
         updateParams.setMargins(0, 0, dp(8), 0);
         actions.addView(updateAction, updateParams);
 
-        TextView support = topAction("\u2615  SUPPORT");
-        support.setOnClickListener(v -> openExternal("https://buymeacoffee.com/jesty"));
-        actions.addView(support);
-
         TextView github = topAction("\u2605  GITHUB");
         github.setOnClickListener(v -> openExternal(
                 "https://github.com/JestyLabs/Jesty-RP-Charging-Separation"));
         LinearLayout.LayoutParams githubParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, dp(38));
-        githubParams.setMargins(dp(8), 0, 0, 0);
         actions.addView(github, githubParams);
+
+        TextView support = topAction("\u2615  SUPPORT");
+        support.setOnClickListener(v -> openExternal("https://buymeacoffee.com/jesty"));
+        LinearLayout.LayoutParams supportParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(38));
+        supportParams.setMargins(dp(8), 0, 0, 0);
+        actions.addView(support, supportParams);
         return actions;
     }
 
@@ -835,7 +851,7 @@ public final class MainActivity extends Activity {
                 "battery"));
         diagnostic.setText(Build.MODEL + "  ·  "
                 + (!telemetry.usbPresent ? "On battery"
-                : active ? "Not charging · running from USB"
+                : active ? "Not charging"
                 : telemetry.batteryStatus));
     }
 

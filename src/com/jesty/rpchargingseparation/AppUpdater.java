@@ -63,14 +63,12 @@ final class AppUpdater {
 
     private static final class Release {
         final String tag;
-        final String notes;
         final String apkUrl;
         final long apkSize;
         final String sha256;
 
-        Release(String tag, String notes, String apkUrl, long apkSize, String sha256) {
+        Release(String tag, String apkUrl, long apkSize, String sha256) {
             this.tag = tag;
-            this.notes = notes;
             this.apkUrl = apkUrl;
             this.apkSize = apkSize;
             this.sha256 = sha256;
@@ -155,12 +153,9 @@ final class AppUpdater {
 
     private void showUpdateDialog(Release release) {
         if (activity.isFinishing() || activity.isDestroyed()) return;
-        StringBuilder message = new StringBuilder(String.format(Locale.US,
-                "Version %s is available. You have %s.",
-                release.version(), installedVersion()));
-        String notes = summarize(release.notes);
-        if (!notes.isEmpty()) message.append("\n\n").append(notes);
-        message.append("\n\nBypass charging settings are kept.");
+        String message = String.format(Locale.US,
+                "v%s is ready. You're on v%s.\n\nYour settings will be kept.",
+                release.version(), installedVersion());
         new AlertDialog.Builder(activity, android.R.style.Theme_Material_Dialog_Alert)
                 .setTitle("Update available")
                 .setMessage(message)
@@ -416,8 +411,7 @@ final class AppUpdater {
                         || !UpdateVersion.isTrustedDownloadUrl(url, REPOSITORY, tag)) {
                     continue;
                 }
-                return new Release(tag, release.optString("body", ""), url,
-                        size, sha256);
+                return new Release(tag, url, size, sha256);
             }
         } catch (Throwable error) {
             Log.w(TAG, "Unreadable release information", error);
@@ -442,23 +436,6 @@ final class AppUpdater {
         } catch (Throwable error) {
             return "0";
         }
-    }
-
-    /** Keeps the dialog short: drops Markdown headings and limits the release notes. */
-    private static String summarize(String notes) {
-        if (notes == null) return "";
-        StringBuilder text = new StringBuilder();
-        for (String line : notes.split("\\r?\\n")) {
-            String trimmed = line.trim();
-            if (trimmed.startsWith("#")) {
-                if (text.length() > 0) break;
-                continue;
-            }
-            if (trimmed.isEmpty() && text.length() == 0) continue;
-            text.append(trimmed.replace("`", "").replace("**", "")).append('\n');
-        }
-        String summary = text.toString().trim();
-        return summary.length() > 600 ? summary.substring(0, 600).trim() + "..." : summary;
     }
 
     private static String hex(byte[] bytes) {

@@ -1,5 +1,11 @@
 # Live validation status
 
+The exact signed v1.5.7 APK was installed in place on a Flip 2. Its LIVE card
+showed the status beside the heading and kept the device and detail lines
+aligned at full width. GITHUB appeared before SUPPORT. With USB connected,
+the native limit was `10/10`, battery status was `Not charging`, and the
+foreground service remained active. The narrow-screen layout was not tested.
+
 The published v1.5.6 APK was installed on a Flip 2 through the new in-app
 updater, starting from an updater-enabled v1.5.5 test build (the public v1.5.5
 did not include the updater). GitHub release discovery, install-source

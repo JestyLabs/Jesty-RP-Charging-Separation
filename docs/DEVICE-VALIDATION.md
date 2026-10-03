@@ -24,6 +24,10 @@ For v1.5.5, the status is inside the same LIVE DASHBOARD card, beside its title
 and device line on a wide Flip 2 screen. The narrow-screen layout still needs
 checking.
 
+For v1.5.7, the simplified LIVE card and GITHUB/SUPPORT button order were
+visually checked on a wide Flip 2 screen. The narrow-screen layout still needs
+checking.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.

@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.6"><strong>Download APK</strong></a>
+  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.7"><strong>Download APK</strong></a>
   · <a href="#normal-charging-vs-charging-separation">How it works</a>
   · <a href="docs/BENCHMARKS.md">Measurements</a>
   · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
@@ -82,9 +82,15 @@ screen shows a user-set 65% charge-again level. They confirm the screen layout
 and displayed charging-to-limit state on the device; they do not show the
 transition at 80% or the later resume at 65%.
 
-In v1.5.5, the charging status shares the LIVE DASHBOARD card on wide
-landscape screens, beside its title and device line. This layout was visually
-checked on a Flip 2; the narrow-screen layout remains to be checked.
+In v1.5.7, the LIVE card places the charging status beside its heading and
+shows the device and details on separate full-width lines. The UPDATE,
+GITHUB, and SUPPORT buttons follow that order when an update is available.
+This layout was visually checked on a Flip 2; the narrow-screen layout remains
+to be checked.
+
+<p align="center">
+  <img src="assets/screenshots/flip2-v1.5.7-live.png" alt="v1.5.7 LIVE card on Retroid Pocket Flip 2" width="760">
+</p>
 
 <p align="center">
   <img src="assets/screenshots/flip2-v1.5.2-right-away.png" alt="v1.5.2 Right away mode on Retroid Pocket Flip 2" width="760">
@@ -162,8 +168,8 @@ Before and while separation is active, the controller:
 
 ## Install and forget
 
-1. Download `Jesty-RP-Charging-Separation-1.5.6.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.6).
+1. Download `Jesty-RP-Charging-Separation-1.5.7.apk` from the
+   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.7).
 2. Install and open **Jesty RP Charging Separation**.
 3. Connect a suitable USB charger.
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.

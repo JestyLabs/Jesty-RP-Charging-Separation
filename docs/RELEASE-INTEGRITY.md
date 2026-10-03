@@ -1,5 +1,22 @@
 # Release integrity
 
+## 1.5.7 LIVE card layout
+
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `28`
+- Version name: `1.5.7`
+- APK: `Jesty-RP-Charging-Separation-1.5.7.apk`
+- Signed APK size: `6,067,119` bytes
+- Signed APK SHA-256:
+  `D9C992C7E4C3CB15A77AB02D205CA36AB34BE0435A67386E9B7AC8C5D549229F`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java policy tests, Android build, package/version inspection, and APK
+signature verification passed. The exact APK installed in place on a Flip 2;
+the LIVE layout was visually checked and native bypass remained active.
+
 ## 1.5.6 in-app updates
 
 - Package: `com.jesty.rpchargingseparation`

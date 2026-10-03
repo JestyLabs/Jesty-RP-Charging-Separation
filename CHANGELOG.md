@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.7
+
+- Simplify the LIVE card header: align the status with LIVE, place the device
+  and charging details on full-width lines, and remove duplicate state text.
+- Put GITHUB before SUPPORT beside the UPDATE button.
+- Keep the in-app update prompt short and focused on the version and settings.
+
 ## 1.5.6
 
 - Add an in-app update prompt and UPDATE button for newer stable GitHub releases.
