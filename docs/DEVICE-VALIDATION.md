@@ -35,6 +35,21 @@ Flip 2 uses 1.0.0.130 firmware; its screen-off wake lock and simulated
 threshold transition were checked, but a full charge cycle on the reporter's
 device remains open. The reported .311 full build ID is unverified.
 
+For the issue #2 reliability changes (Unreleased), check on Flip 2 firmware
+1.0.0.311 if possible, with the screen off and without opening the app during
+each run. Attach **COPY DIAGNOSTICS** output to each result.
+
+- [ ] Bypass turned on while unplugged (READY), screen off, then plug in:
+  charging stops at the stop level without reopening the app.
+- [ ] Bypass turned on while plugged in below the stop level, screen off: the
+  native limit changes from `0` to `limitMax` within one percentage point.
+- [ ] After stopping, the battery drops to the charge-again level with the screen
+  off and charging resumes, then stops again.
+- [ ] With the app restricted in App info → Battery, the warning appears.
+- [ ] After a reboot with boot restoration ON and USB unplugged, the service is
+  READY and plugging in works with the screen off.
+- [ ] A forced temporary failure shows TRYING AGAIN and recovers by itself.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.

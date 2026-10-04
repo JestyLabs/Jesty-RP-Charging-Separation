@@ -20,12 +20,12 @@ public final class BootReceiver extends BroadcastReceiver {
         if (!prefs.getBoolean("desired_enabled", false)) return;
 
         try {
-            if (PowerTelemetry.read().usbPresent) {
-                Intent service = new Intent(context, BypassService.class)
-                        .setAction(BypassService.ACTION_ENABLE);
-                if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(service);
-                else context.startService(service);
-            }
+            // Start even without USB: the service waits for the cable itself. The manifest
+            // POWER_CONNECTED broadcast is not delivered to apps targeting API 26+.
+            Intent service = new Intent(context, BypassService.class)
+                    .setAction(BypassService.ACTION_ENABLE);
+            if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(service);
+            else context.startService(service);
         } catch (Throwable ignored) {
             // Fail closed: normal charging remains enabled.
         }

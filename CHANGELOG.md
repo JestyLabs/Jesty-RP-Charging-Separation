@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.5.9-rc1 (candidate; device validation pending)
+
+- Fix issue #2 more fully: battery level and USB plug/unplug events now wake
+  the service and re-check the stop level, so it no longer depends only on the
+  two-second timer, which Android pauses in deep sleep. This covers turning
+  bypass on before plugging in, then plugging in with the screen off.
+- A temporary failure (charger not settled, validation mismatch, telemetry read
+  error) now keeps normal charging and retries no sooner than 15 s, 30 s, 60 s,
+  up to 5 min, when the service next runs. The status shows **TRYING AGAIN**.
+- An unsupported device or failed restore keeps its notification visible after
+  the service stops.
+- When bypass is on, the service starts at boot or after an update even without
+  USB, and waits for the cable.
+- Warn when Android restricts the app in the background, and add **COPY
+  DIAGNOSTICS** for bug reports: version, firmware, settings, readings, and the
+  recent events saved on the device.
+- Move the state machine into `BypassController`, which runs without Android.
+  Add scenario tests for it, `scripts/test-all.ps1`, and a GitHub Actions
+  workflow that also builds an unsigned APK.
+
 ## 1.5.8
 
 - Keep the CPU awake only while automatic mode charges toward the stop level,

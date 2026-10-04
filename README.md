@@ -46,11 +46,16 @@ running device.
   or charge to a chosen level (80% by default) and charge again at a second
   chosen level (70% by default). The charge-again level stays at least five
   percentage points below the stop level.
-- In battery-level mode, keep the CPU awake while charging toward the stop
-  level so the threshold monitor continues working with the screen off. The
-  wake lock is released when bypass starts, USB disconnects, or bypass stops.
+- In battery-level mode, react to battery level and USB events and keep the CPU
+  awake while charging toward the stop level, so the threshold is applied with
+  the screen off. The wake lock is released when bypass starts, USB
+  disconnects, or bypass stops.
 - Verifies that separation actually activated before reporting success.
-- Restores normal charging if validation or safety telemetry fails.
+- Restores normal charging if validation or safety telemetry fails, then tries
+  again with increasing delays (shown as **TRYING AGAIN**).
+- **COPY DIAGNOSTICS** copies the app version, firmware, settings, readings and
+  recent events for a bug report. It shows a warning if Android restricts the
+  app in the background.
 - Optional restore after a normal reboot.
 - In-app updates: an **UPDATE** button appears next to SUPPORT and GITHUB when a
   newer stable release is published, and installs it after you confirm.
@@ -229,6 +234,12 @@ Requirements: PowerShell 5.1+, Android SDK platform 28+, Android Build Tools
 
 ```powershell
 .\build.ps1
+```
+
+Run the JDK-only tests (no device or Android SDK needed):
+
+```powershell
+.\scripts\test-all.ps1
 ```
 
 Signing is opt-in and reads the password interactively. The repository contains

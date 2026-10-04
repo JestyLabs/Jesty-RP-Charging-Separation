@@ -5,15 +5,21 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.os.Build;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 
-import java.util.Locale;
+import com.jesty.rpchargingseparation.BypassController.State;
+
+import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +30,7 @@ public final class BypassService extends Service {
     static final String ACTION_DISABLE = "com.jesty.rpchargingseparation.DISABLE";
     static final String CHANNEL = "charging_separation";
     static final int NOTIFICATION_ID = 4102;
-    private static final String TAG = "JestyRPCharging";
+    static final String TAG = "JestyRPCharging";
 
     static final String PREF_MODE = "separation_mode";
     static final String MODE_IMMEDIATE = "immediate";
@@ -41,22 +47,46 @@ public final class BypassService extends Service {
     static final int MIN_RESUME_PERCENT = ChargeLimitPolicy.MIN_RESUME_PERCENT;
     static final int MIN_RESUME_GAP = ChargeLimitPolicy.MIN_RESUME_GAP;
 
-    enum State { OFF, ARMED, ENABLING, ACTIVE, CHARGING_TO_LIMIT, FAILED }
+    static final String PREF_DESIRED = "desired_enabled";
+    static final String PREF_REQUESTED = "requested";
+    // Upper bound for one event-triggered evaluation, including charger settling.
+    private static final long EVENT_WAKE_MS = 60_000L;
+    private static final long POLL_SECONDS = 2L;
 
     private static volatile State state = State.OFF;
-    private static volatile String detail = "Bypass charging is off";
+    private static volatile String detail = BypassController.OFF_REASON;
 
-    private final AtomicBoolean stopping = new AtomicBoolean(false);
+    private final AtomicBoolean tickQueued = new AtomicBoolean(false);
     private ScheduledExecutorService worker;
     private SharedPreferences prefs;
-    private int unsafeSamples;
-    private boolean monitorScheduled;
-    // Auto-limit hysteresis: true once the limit was reached, until the resume threshold.
-    private boolean limitReached;
+    private BypassController controller;
+    private EventLog events;
     private PowerManager.WakeLock chargeToLimitWakeLock;
+    private PowerManager.WakeLock eventWakeLock;
+    private boolean monitorScheduled;
+    private boolean receiverRegistered;
+    private int lastEventKey = Integer.MIN_VALUE;
 
     static State state() { return state; }
     static String detail() { return detail; }
+
+    private final BroadcastReceiver powerEvents = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
+                int level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1);
+                int scale = intent.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100);
+                int percent = level < 0 || scale <= 0 ? -1 : level * 100 / scale;
+                int plugged = intent.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, 0);
+                // BATTERY_CHANGED also fires for voltage/temperature; react to level or plug.
+                int key = percent * 16 + plugged;
+                if (key == lastEventKey) return;
+                lastEventKey = key;
+            }
+            scheduleTick(action == null ? "event" : shortAction(action), true);
+        }
+    };
 
     static boolean autoLimitMode(SharedPreferences prefs) {
         return MODE_AUTO_LIMIT.equals(prefs.getString(PREF_MODE, MODE_IMMEDIATE));
@@ -91,21 +121,30 @@ public final class BypassService extends Service {
         return Math.max(min, Math.min(max, value));
     }
 
+    static EventLog events(Context context) {
+        return new EventLog(context.getFilesDir());
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         prefs = getSharedPreferences("state", MODE_PRIVATE);
+        events = events(this);
         worker = Executors.newSingleThreadScheduledExecutor();
         PowerManager power = getSystemService(PowerManager.class);
         chargeToLimitWakeLock = power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 TAG + ":charge-to-limit");
         chargeToLimitWakeLock.setReferenceCounted(false);
+        eventWakeLock = power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG + ":power-event");
+        eventWakeLock.setReferenceCounted(false);
+        controller = new BypassController(new SysfsHardware(), new PrefsSettings(),
+                new AndroidPlatform());
         createChannel();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        boolean desired = prefs.getBoolean("desired_enabled", false);
+        boolean desired = prefs.getBoolean(PREF_DESIRED, false);
         String action = intent == null ? "sticky restart" : intent.getAction();
         Log.i(TAG, "Service start: " + action + ", desired=" + desired
                 + ", flags=" + flags);
@@ -115,296 +154,154 @@ public final class BypassService extends Service {
             state = State.ENABLING;
             detail = "Checking hardware...";
             startForeground(NOTIFICATION_ID, notification(detail));
-            worker.execute(this::enableSafely);
+            registerPowerEvents();
+            ensureMonitor();
         } else {
             startForeground(NOTIFICATION_ID, notification("Restoring normal charging..."));
-            worker.execute(() -> disableSafely("Bypass charging is off", true));
         }
+        String source = action == null ? "start" : shortAction(action);
+        worker.execute(() -> controller.start(source));
         return START_STICKY;
     }
 
-    private void enableSafely() {
+    /**
+     * Event-driven path for issue #2: the 2 s timer uses a clock that stops in deep
+     * sleep, so a plug-in or a battery level step while asleep could go unnoticed until
+     * the app was reopened. Each event briefly holds the CPU and re-evaluates the state.
+     */
+    private void registerPowerEvents() {
+        if (receiverRegistered) return;
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        filter.addAction(Intent.ACTION_POWER_CONNECTED);
+        filter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        registerReceiver(powerEvents, filter);
+        receiverRegistered = true;
+    }
+
+    private void scheduleTick(String source, boolean fromEvent) {
+        if (worker == null || worker.isShutdown()) return;
+        if (fromEvent) eventWakeLock.acquire(EVENT_WAKE_MS);
+        if (!tickQueued.compareAndSet(false, true)) return;
         try {
-            stopping.set(false);
-            if (!prefs.getBoolean("desired_enabled", false)) {
-                disableSafely("Bypass charging is off", true);
-                return;
-            }
-            requireSupportedDevice();
-            PowerTelemetry before = PowerTelemetry.read();
-            if (!before.usbPresent) {
-                if (before.limit != 0) restoreAndConfirm();
-                releaseChargeToLimitWakeLock();
-                state = State.ARMED;
-                detail = "Plug in USB to start";
-                updateNotification(detail);
-                ensureMonitor();
-                return;
-            }
-            // USB can appear before a dock finishes negotiating power. Do not
-            // treat its initial Discharging/Unknown status as a hardware failure.
-            for (int attempt = 0; attempt < 10 && before.usbPresent
-                    && !powerReady(before); attempt++) {
-                detail = "Waiting for charger...";
-                updateNotification(detail);
-                Thread.sleep(1000L);
-                before = PowerTelemetry.read();
-            }
-            if (!prefs.getBoolean("desired_enabled", false)) {
-                disableSafely("Bypass charging is off", true);
-                return;
-            }
-            if (!before.usbPresent) {
-                if (before.limit != 0) restoreAndConfirm();
-                releaseChargeToLimitWakeLock();
-                state = State.ARMED;
-                detail = "Plug in USB to start";
-                updateNotification(detail);
-                ensureMonitor();
-                return;
-            }
-            if (!powerReady(before)) {
-                throw new IllegalStateException("Charger did not settle: "
-                        + before.batteryStatus);
-            }
-            if (before.limitMax <= 0) throw new IllegalStateException("Invalid native limit");
-            if (before.limit != 0 && before.limit != before.limitMax) {
-                throw new IllegalStateException("Unexpected native limit: " + before.limit);
-            }
-
-            // A process restart loses the in-memory hysteresis flag. The native
-            // Retroid setting tells us whether the stop level was already reached.
-            if (autoLimitMode(prefs) && before.nativeIdleMode()) limitReached = true;
-
-            if (shouldChargeToLimit(before)) {
-                enterLimitCharging(before);
-                return;
-            }
-
-            prefs.edit().putBoolean("requested", true).apply();
-            PowerTelemetry after = before;
-            if (!before.nativeIdleMode()) {
-                RootBridge.exec("chmod 644 " + PowerTelemetry.LIMIT);
-                RootBridge.exec("echo " + before.limitMax + " > " + PowerTelemetry.LIMIT);
-                RootBridge.exec("chmod 444 " + PowerTelemetry.LIMIT);
-                Thread.sleep(1500L);
-                after = PowerTelemetry.read();
-            }
-            for (int attempt = 0; attempt < 8 && after.usbPresent
-                    && after.limit == after.limitMax && !after.nativeIdleMode(); attempt++) {
-                detail = "Confirming bypass...";
-                updateNotification(detail);
-                Thread.sleep(1000L);
-                after = PowerTelemetry.read();
-            }
-            if (!prefs.getBoolean("desired_enabled", false)) {
-                disableSafely("Bypass charging is off", true);
-                return;
-            }
-            if (!after.usbPresent || after.limit != after.limitMax
-                    || !"Not charging".equalsIgnoreCase(after.batteryStatus)) {
-                throw new IllegalStateException("Validation failed: limit " + after.limit + "/"
-                        + after.limitMax + ", status " + after.batteryStatus);
-            }
-
-            state = State.ACTIVE;
-            limitReached = autoLimitMode(prefs);
-            releaseChargeToLimitWakeLock();
-            Log.i(TAG, before.nativeIdleMode()
-                    ? "Reattached to existing native separation"
-                    : "Enabled and verified native separation");
-            detail = autoLimitMode(prefs)
-                    ? String.format(Locale.US,
-                            "Stopped at %d%% - charges again at %d%%",
-                            limitPercent(prefs), resumePercent(prefs))
-                    : "Battery is not charging";
-            updateNotification(detail);
-            ensureMonitor();
-        } catch (Throwable error) {
-            Log.e(TAG, "Enable failed", error);
-            detail = error.getMessage() == null ? error.toString() : error.getMessage();
-            String failure = detail;
-            disableSafely(failure, true);
-            state = State.FAILED;
-            detail = failure;
-        }
-    }
-
-    private boolean shouldChargeToLimit(PowerTelemetry telemetry) {
-        return ChargeLimitPolicy.shouldChargeToLimit(autoLimitMode(prefs),
-                telemetry.batteryPercent, limitPercent(prefs), resumePercent(prefs),
-                limitReached);
-    }
-
-    private static boolean powerReady(PowerTelemetry telemetry) {
-        return "Charging".equalsIgnoreCase(telemetry.batteryStatus)
-                || "Full".equalsIgnoreCase(telemetry.batteryStatus)
-                || "Not charging".equalsIgnoreCase(telemetry.batteryStatus);
-    }
-
-    private void enterLimitCharging(PowerTelemetry telemetry) throws Exception {
-        if (telemetry.limit != 0) restoreAndConfirm();
-        holdChargeToLimitWakeLock();
-        limitReached = false;
-        unsafeSamples = 0;
-        state = State.CHARGING_TO_LIMIT;
-        updateLimitChargingDetail(telemetry);
-        ensureMonitor();
-    }
-
-    private void updateLimitChargingDetail(PowerTelemetry telemetry) {
-        detail = String.format(Locale.US,
-                "Will stop at %d%% (now %d%%)",
-                limitPercent(prefs), telemetry.batteryPercent);
-        updateNotification(detail);
-    }
-
-    private void monitor() {
-        if (stopping.get()) return;
-        try {
-            PowerTelemetry telemetry = PowerTelemetry.read();
-            boolean desired = prefs.getBoolean("desired_enabled", false);
-            if (!desired) {
-                disableSafely("Bypass charging is off", true);
-                return;
-            }
-            if (state == State.ARMED) {
-                if (telemetry.usbPresent) enableSafely();
-                return;
-            }
-            if (state == State.CHARGING_TO_LIMIT) {
-                if (!telemetry.usbPresent) {
-                    releaseChargeToLimitWakeLock();
-                    state = State.ARMED;
-                    detail = "Plug in USB to start";
-                    updateNotification(detail);
-                    return;
+            worker.execute(() -> {
+                tickQueued.set(false);
+                try {
+                    controller.tick(source);
+                } finally {
+                    if (!tickQueued.get() && eventWakeLock.isHeld()) eventWakeLock.release();
                 }
-                if (telemetry.limit != 0) {
-                    disableSafely("Control changed externally", true);
-                    return;
-                }
-                if (shouldChargeToLimit(telemetry)) updateLimitChargingDetail(telemetry);
-                else enableSafely();
-                return;
-            }
-            if (state != State.ACTIVE) return;
-            if (!telemetry.usbPresent) {
-                releaseChargeToLimitWakeLock();
-                state = State.ARMED;
-                detail = "Plug in USB to start";
-                updateNotification(detail);
-                return;
-            }
-            if (telemetry.limit != telemetry.limitMax) {
-                disableSafely("Control changed externally", true);
-                return;
-            }
-            if (autoLimitMode(prefs)) {
-                if (telemetry.batteryPercent <= resumePercent(prefs)) limitReached = false;
-                if (shouldChargeToLimit(telemetry)) {
-                    enterLimitCharging(telemetry);
-                    return;
-                }
-            }
-
-            if (telemetry.batteryCurrentUa < -300_000L) unsafeSamples++;
-            else unsafeSamples = 0;
-            if (unsafeSamples >= 3) {
-                Log.w(TAG, "Safety stop: battery powering device at "
-                        + telemetry.batteryCurrentUa + " uA while USB is present");
-                prefs.edit().putString(PREF_LAST_SAFETY_STOP,
-                        "Battery was powering the device")
-                        .putBoolean("desired_enabled", false).commit();
-                disableSafely("Battery was powering the device", true);
-                return;
-            }
-
-            detail = autoLimitMode(prefs)
-                    ? String.format(Locale.US,
-                            "Stopped at %d%% - charges again at %d%% - USB %.1f W",
-                            limitPercent(prefs), resumePercent(prefs), telemetry.usbWatts())
-                    : String.format(Locale.US,
-                            "Battery is not charging - USB %.1f W",
-                            telemetry.usbWatts());
-            updateNotification(detail);
-        } catch (Throwable error) {
-            Log.e(TAG, "Monitoring failed", error);
-            disableSafely("Telemetry error", true);
-            if (state == State.OFF) {
-                state = State.FAILED;
-                detail = "Telemetry error";
-            }
+            });
+        } catch (RuntimeException rejected) {
+            tickQueued.set(false);
         }
     }
 
     private void ensureMonitor() {
         if (monitorScheduled) return;
         monitorScheduled = true;
-        worker.scheduleAtFixedRate(this::monitor, 0L, 2L, TimeUnit.SECONDS);
+        worker.scheduleAtFixedRate(() -> scheduleTick("poll", false),
+                POLL_SECONDS, POLL_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void holdChargeToLimitWakeLock() {
-        if (!chargeToLimitWakeLock.isHeld()) {
-            chargeToLimitWakeLock.acquire();
-            Log.i(TAG, "Holding CPU awake until the charge limit is reached");
+    private static String shortAction(String action) {
+        int dot = action.lastIndexOf('.');
+        return dot < 0 ? action : action.substring(dot + 1);
+    }
+
+    private void endService(boolean keepNotice) {
+        if (keepNotice) {
+            // Keep the failure reason visible after the service ends.
+            updateNotification(detail);
+            stopForeground(STOP_FOREGROUND_DETACH);
+        } else {
+            stopForeground(STOP_FOREGROUND_REMOVE);
         }
+        stopSelf();
     }
 
-    private void releaseChargeToLimitWakeLock() {
-        if (chargeToLimitWakeLock != null && chargeToLimitWakeLock.isHeld()) {
-            chargeToLimitWakeLock.release();
-            Log.i(TAG, "Released charge-limit wake lock");
-        }
-    }
-
-    private void restoreHardware() throws Exception {
-        RootBridge.exec("chmod 644 " + PowerTelemetry.LIMIT);
-        RootBridge.exec("echo 0 > " + PowerTelemetry.LIMIT);
-        RootBridge.exec("chmod 444 " + PowerTelemetry.LIMIT);
-    }
-
-    private void restoreAndConfirm() throws Exception {
-        restoreHardware();
-        String readback = RootBridge.exec("cat " + PowerTelemetry.LIMIT).trim();
-        if (!"0".equals(readback)) {
-            throw new IllegalStateException("Restore not confirmed: " + readback);
-        }
-        prefs.edit().putBoolean("requested", false).apply();
-    }
-
-    private void disableSafely(String reason, boolean stop) {
-        if (!stopping.compareAndSet(false, true) && stop) return;
-        releaseChargeToLimitWakeLock();
-        try {
-            restoreAndConfirm();
-            limitReached = false;
-            state = State.OFF;
-            detail = reason;
-        } catch (Throwable error) {
-            state = State.FAILED;
-            detail = "Critical restore failure: " + error.getMessage();
-            Log.e(TAG, detail, error);
-        } finally {
-            if (stop) {
-                updateNotification(detail);
-                stopForeground(true);
-                stopSelf();
+    private final class SysfsHardware implements BypassController.Hardware {
+        @Override
+        public String missingControls() {
+            File limit = new File(PowerTelemetry.LIMIT);
+            File maximum = new File(PowerTelemetry.LIMIT_MAX);
+            StringBuilder missing = new StringBuilder();
+            if (!limit.isFile() || !limit.canRead()) missing.append("charge_control_limit");
+            if (!maximum.isFile() || !maximum.canRead()) {
+                if (missing.length() > 0) missing.append(", ");
+                missing.append("charge_control_limit_max");
             }
+            return missing.length() == 0 ? null
+                    : "Unsupported on " + Build.MODEL + ": missing " + missing;
+        }
+
+        @Override
+        public PowerTelemetry read() throws Exception {
+            return PowerTelemetry.read();
+        }
+
+        @Override
+        public void writeLimit(int value) throws Exception {
+            RootBridge.exec("chmod 644 " + PowerTelemetry.LIMIT);
+            RootBridge.exec("echo " + value + " > " + PowerTelemetry.LIMIT);
+            RootBridge.exec("chmod 444 " + PowerTelemetry.LIMIT);
+        }
+
+        @Override
+        public String readLimitRaw() throws Exception {
+            return RootBridge.exec("cat " + PowerTelemetry.LIMIT);
         }
     }
 
-    private void requireSupportedDevice() {
-        java.io.File limit = new java.io.File(PowerTelemetry.LIMIT);
-        java.io.File maximum = new java.io.File(PowerTelemetry.LIMIT_MAX);
-        StringBuilder missing = new StringBuilder();
-        if (!limit.isFile() || !limit.canRead()) missing.append("charge_control_limit");
-        if (!maximum.isFile() || !maximum.canRead()) {
-            if (missing.length() > 0) missing.append(", ");
-            missing.append("charge_control_limit_max");
+    private final class PrefsSettings implements BypassController.Settings {
+        @Override public boolean desired() { return prefs.getBoolean(PREF_DESIRED, false); }
+        @Override public boolean autoLimit() { return autoLimitMode(prefs); }
+        @Override public int limitPercent() { return BypassService.limitPercent(prefs); }
+        @Override public int resumePercent() { return BypassService.resumePercent(prefs); }
+
+        @Override
+        public void setRequested(boolean requested) {
+            prefs.edit().putBoolean(PREF_REQUESTED, requested).apply();
         }
-        if (missing.length() > 0) throw new IllegalStateException(
-                "Unsupported on " + Build.MODEL + ": missing " + missing);
+
+        @Override
+        public void recordSafetyStop(String reason) {
+            prefs.edit().putString(PREF_LAST_SAFETY_STOP, reason)
+                    .putBoolean(PREF_DESIRED, false).commit();
+        }
+    }
+
+    private final class AndroidPlatform implements BypassController.Platform {
+        @Override public long nowMillis() { return SystemClock.elapsedRealtime(); }
+
+        @Override
+        public void sleep(long millis) throws InterruptedException {
+            Thread.sleep(millis);
+        }
+
+        @Override
+        public void setChargeWakeLock(boolean held) {
+            if (held && !chargeToLimitWakeLock.isHeld()) chargeToLimitWakeLock.acquire();
+            if (!held && chargeToLimitWakeLock.isHeld()) chargeToLimitWakeLock.release();
+        }
+
+        @Override
+        public void publish(State next, String nextDetail) {
+            state = next;
+            detail = nextDetail;
+            updateNotification(nextDetail);
+        }
+
+        @Override
+        public void stopService(boolean keepNotice) {
+            endService(keepNotice);
+        }
+
+        @Override
+        public void log(String message) {
+            Log.i(TAG, message);
+            events.add(System.currentTimeMillis(), message);
+        }
     }
 
     private Notification notification(String text) {
@@ -419,7 +316,8 @@ public final class BypassService extends Service {
                 .setOngoing(state == State.ACTIVE
                         || state == State.ENABLING
                         || state == State.ARMED
-                        || state == State.CHARGING_TO_LIMIT)
+                        || state == State.CHARGING_TO_LIMIT
+                        || state == State.RETRYING)
                 .setOnlyAlertOnce(true)
                 .build();
     }
@@ -445,13 +343,22 @@ public final class BypassService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "Service destroyed: state=" + state + ", desired="
-                + prefs.getBoolean("desired_enabled", false));
-        releaseChargeToLimitWakeLock();
-        if (state == State.ACTIVE || state == State.ENABLING) {
-            disableSafely("Service stopped", false);
+        if (receiverRegistered) {
+            unregisterReceiver(powerEvents);
+            receiverRegistered = false;
         }
-        if (worker != null) worker.shutdownNow();
+        if (worker != null) {
+            // Interrupt any enable in progress, then restore on this thread.
+            worker.shutdownNow();
+            try {
+                worker.awaitTermination(3, TimeUnit.SECONDS);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        if (controller != null) controller.destroy();
+        if (chargeToLimitWakeLock.isHeld()) chargeToLimitWakeLock.release();
+        if (eventWakeLock.isHeld()) eventWakeLock.release();
         super.onDestroy();
     }
 
