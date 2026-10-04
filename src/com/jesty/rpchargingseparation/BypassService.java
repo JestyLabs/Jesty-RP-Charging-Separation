@@ -148,6 +148,8 @@ public final class BypassService extends Service {
         String action = intent == null ? "sticky restart" : intent.getAction();
         Log.i(TAG, "Service start: " + action + ", desired=" + desired
                 + ", flags=" + flags);
+        events.add(System.currentTimeMillis(), "Service start: " + action
+                + ", desired=" + desired + ", flags=" + flags);
         // The saved user choice is authoritative, including for a sticky restart
         // with a null intent or an old ENABLE intent delivered after an OFF.
         if (desired) {
@@ -338,6 +340,8 @@ public final class BypassService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         Log.i(TAG, "Task removed; no change to bypass requested");
+        if (events != null) events.add(System.currentTimeMillis(),
+                "Task removed; no change to bypass requested");
         super.onTaskRemoved(rootIntent);
     }
 

@@ -39,7 +39,8 @@ For the issue #2 reliability changes (v1.5.9), check on Flip 2 firmware
 1.0.0.311 if possible, with the screen off and without opening the app during
 each run. Attach **COPY DIAGNOSTICS** output to each result.
 
-- [x] Bypass turned on while unplugged (READY), screen off, then plug in:
+- [ ] On the reporter's .311 firmware, bypass turned on while unplugged (READY),
+  screen off, then plug in:
   charging stops at the stop level without reopening the app.
 - [ ] Bypass turned on while plugged in below the stop level, screen off: the
   native limit changes from `0` to `limitMax` within one percentage point.
@@ -64,7 +65,20 @@ clearing data. Its dashboard showed RUNNING FROM CHARGER at 80%, the battery
 was Not charging, and the service was still monitoring. Its charging code is
 the same as the tested build; only the UI and screen timeout changed.
 The [80% screenshot](../assets/screenshots/flip2-v1.5.9-80percent.png) shows
-that final build. The reporter's 1.0.0.311 device remains untested.
+that final build.
+
+The reporter retested v1.5.9 on
+`RPFlip2_HV1.0.0.311_20260725_132332_user`. At 11:07, the service logged
+`USB detected (BATTERY_CHANGED) at 65%` and `Holding CPU awake until the stop
+level`. The next saved event was a fresh `Start (ENABLE)` at 12:04, when the
+app was reopened at 99%; separation activated then. The notification had
+disappeared while the app was closed. No `Service destroyed` or sticky restart
+appears in the saved events between those times. This strongly suggests that
+the process or service stopped, but the diagnostics do not establish whether
+the cause was memory pressure, a crash, a Recents/Task Manager action, or a
+vendor policy. `Background restricted: false` does not rule out those causes.
+The pending diagnostic branch records Android's previous process exit reasons
+and task-removal events; keep issue #2 open.
 
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
