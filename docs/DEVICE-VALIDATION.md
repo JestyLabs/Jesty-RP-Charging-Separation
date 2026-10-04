@@ -35,11 +35,11 @@ Flip 2 uses 1.0.0.130 firmware; its screen-off wake lock and simulated
 threshold transition were checked, but a full charge cycle on the reporter's
 device remains open. The reported .311 full build ID is unverified.
 
-For the issue #2 reliability changes (Unreleased), check on Flip 2 firmware
+For the issue #2 reliability changes (v1.5.9), check on Flip 2 firmware
 1.0.0.311 if possible, with the screen off and without opening the app during
 each run. Attach **COPY DIAGNOSTICS** output to each result.
 
-- [ ] Bypass turned on while unplugged (READY), screen off, then plug in:
+- [x] Bypass turned on while unplugged (READY), screen off, then plug in:
   charging stops at the stop level without reopening the app.
 - [ ] Bypass turned on while plugged in below the stop level, screen off: the
   native limit changes from `0` to `limitMax` within one percentage point.
@@ -49,6 +49,22 @@ each run. Attach **COPY DIAGNOSTICS** output to each result.
 - [ ] After a reboot with boot restoration ON and USB unplugged, the service is
   READY and plugging in works with the screen off.
 - [ ] A forced temporary failure shows TRYING AGAIN and recovers by itself.
+
+On a Flip 2 with build `RPFlip2_V1.0.0.130_20250501_121708_user`, a signed
+1.5.9-rc1 test build was installed over 1.5.8 without clearing data. Bypass
+was turned off (`limit=0`), USB was unplugged, and bypass was enabled while
+unplugged (READY). On plugging in at 75%, the foreground service logged
+`USB detected (ACTION_POWER_CONNECTED)` and held the charge-to-limit CPU wake
+lock. The screen was put to sleep; the device then charged on a wall charger
+without reopening the app. At 80%, the log recorded `Stop level reached`,
+`Enabled and verified native separation`, and wake-lock release. On reconnect
+to ADB, battery status was `Not charging` and the native limit was `10/10`.
+The final signed 1.5.9 build was then installed over the test build without
+clearing data. Its dashboard showed RUNNING FROM CHARGER at 80%, the battery
+was Not charging, and the service was still monitoring. Its charging code is
+the same as the tested build; only the UI and screen timeout changed.
+The [80% screenshot](../assets/screenshots/flip2-v1.5.9-80percent.png) shows
+that final build. The reporter's 1.0.0.311 device remains untested.
 
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.

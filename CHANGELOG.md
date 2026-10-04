@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.9-rc1 (candidate; device validation pending)
+## 1.5.9
 
 - Fix issue #2 more fully: battery level and USB plug/unplug events now wake
   the service and re-check the stop level, so it no longer depends only on the
@@ -19,6 +19,9 @@
 - Move the state machine into `BypassController`, which runs without Android.
   Add scenario tests for it, `scripts/test-all.ps1`, and a GitHub Actions
   workflow that also builds an unsigned APK.
+- Remove the small LIVE label, make the charging state prominent in the wide
+  dashboard card, rename the active state to RUNNING FROM CHARGER, and allow
+  the screen to time out while the app is visible.
 
 ## 1.5.8
 

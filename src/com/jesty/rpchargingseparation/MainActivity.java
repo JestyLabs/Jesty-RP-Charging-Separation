@@ -85,7 +85,6 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("state", MODE_PRIVATE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.BLACK);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -550,10 +549,6 @@ public final class MainActivity extends Activity {
         LinearLayout dashboard = new LinearLayout(this);
         dashboard.setOrientation(LinearLayout.VERTICAL);
 
-        TextView heading = text("LIVE", 11f, YELLOW, true);
-        heading.setLetterSpacing(0.12f);
-        heading.setPadding(dp(4), 0, 0, 0);
-
         diagnostic = text("", 11f, MUTED, false);
         diagnostic.setPadding(dp(4), 0, 0, 0);
 
@@ -561,20 +556,13 @@ public final class MainActivity extends Activity {
             LinearLayout header = new LinearLayout(this);
             header.setOrientation(LinearLayout.VERTICAL);
 
-            LinearLayout titleRow = new LinearLayout(this);
-            titleRow.setOrientation(LinearLayout.HORIZONTAL);
-            titleRow.setGravity(Gravity.CENTER_VERTICAL);
-            titleRow.addView(heading, new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-            stateText.setTextSize(14f);
-            stateText.setGravity(Gravity.END);
+            stateText.setTextSize(20f);
+            stateText.setGravity(Gravity.START);
+            stateText.setPadding(dp(4), 0, dp(4), 0);
             LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
-            stateParams.setMargins(dp(8), 0, dp(4), 0);
-            titleRow.addView(stateText, stateParams);
-            header.addView(titleRow);
+            header.addView(stateText, stateParams);
 
             LinearLayout.LayoutParams deviceParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -597,7 +585,6 @@ public final class MainActivity extends Activity {
             headerParams.setMargins(0, 0, 0, dp(10));
             dashboard.addView(header, headerParams);
         } else {
-            dashboard.addView(heading);
             LinearLayout.LayoutParams deviceParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -893,7 +880,7 @@ public final class MainActivity extends Activity {
             setState("COULD NOT START", ERROR);
             detail = safetyStop + ". Bypass was turned off for safety.";
         } else if (active) {
-            setState("RUNNING FROM USB", YELLOW);
+            setState("RUNNING FROM CHARGER", YELLOW);
         } else if (desired && nativeSeparated) {
             setState("STARTING...", YELLOW);
             detail = "Native bypass active; restoring monitoring";
