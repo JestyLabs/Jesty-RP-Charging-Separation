@@ -37,7 +37,8 @@ if (-not $buildTools) {
 }
 
 $platform = Get-ChildItem -LiteralPath (Join-Path $AndroidSdk 'platforms') -Directory |
-    Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'android.jar') } |
+    Where-Object { $_.Name -match '^android-\d+$' -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName 'android.jar')) } |
     Sort-Object { [int]($_.Name -replace '^android-', '') } -Descending |
     Select-Object -First 1
 if (-not $platform) {

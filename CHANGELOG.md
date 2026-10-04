@@ -19,6 +19,8 @@
 - Move the state machine into `BypassController`, which runs without Android.
   Add scenario tests for it, `scripts/test-all.ps1`, and a GitHub Actions
   workflow that also builds an unsigned APK.
+- Accept standard Android SDK platform directories even when extension SDKs
+  are installed beside them in CI.
 - Remove the small LIVE label, make the charging state prominent in the wide
   dashboard card, rename the active state to RUNNING FROM CHARGER, and allow
   the screen to time out while the app is visible.
