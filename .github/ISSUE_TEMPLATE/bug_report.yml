@@ -21,12 +21,40 @@ body:
       label: App version
     validations:
       required: true
+  - type: dropdown
+    id: start
+    attributes:
+      label: When was bypass turned on?
+      options:
+        - Before plugging in (status READY)
+        - After plugging in
+        - Restored after reboot or update
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Was the screen off when the problem happened?
+      options:
+        - "Yes"
+        - "No"
+        - Not sure
+    validations:
+      required: true
   - type: textarea
     id: steps
     attributes:
       label: Steps to reproduce
+      description: Include the stop and charge-again levels, and whether you reopened the app before checking.
     validations:
       required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Copied diagnostics
+      description: In the app, tap COPY DIAGNOSTICS right after the problem, before turning anything off, and paste the result here (versions after 1.5.8).
+      render: text
   - type: textarea
     id: telemetry
     attributes:

@@ -1,6 +1,9 @@
 package com.jesty.rpchargingseparation;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,6 +38,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -68,6 +72,7 @@ public final class MainActivity extends Activity {
     private TextView deviceValue;
     private TextView tempValue;
     private TextView diagnostic;
+    private TextView restrictionWarning;
     private RadioButton immediateMode;
     private RadioButton autoLimitMode;
     private RadioGroup modeGroup;
@@ -80,7 +85,6 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("state", MODE_PRIVATE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.BLACK);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -545,10 +549,6 @@ public final class MainActivity extends Activity {
         LinearLayout dashboard = new LinearLayout(this);
         dashboard.setOrientation(LinearLayout.VERTICAL);
 
-        TextView heading = text("LIVE", 11f, YELLOW, true);
-        heading.setLetterSpacing(0.12f);
-        heading.setPadding(dp(4), 0, 0, 0);
-
         diagnostic = text("", 11f, MUTED, false);
         diagnostic.setPadding(dp(4), 0, 0, 0);
 
@@ -556,20 +556,13 @@ public final class MainActivity extends Activity {
             LinearLayout header = new LinearLayout(this);
             header.setOrientation(LinearLayout.VERTICAL);
 
-            LinearLayout titleRow = new LinearLayout(this);
-            titleRow.setOrientation(LinearLayout.HORIZONTAL);
-            titleRow.setGravity(Gravity.CENTER_VERTICAL);
-            titleRow.addView(heading, new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-            stateText.setTextSize(14f);
-            stateText.setGravity(Gravity.END);
+            stateText.setTextSize(20f);
+            stateText.setGravity(Gravity.START);
+            stateText.setPadding(dp(4), 0, dp(4), 0);
             LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
-            stateParams.setMargins(dp(8), 0, dp(4), 0);
-            titleRow.addView(stateText, stateParams);
-            header.addView(titleRow);
+            header.addView(stateText, stateParams);
 
             LinearLayout.LayoutParams deviceParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -592,7 +585,6 @@ public final class MainActivity extends Activity {
             headerParams.setMargins(0, 0, 0, dp(10));
             dashboard.addView(header, headerParams);
         } else {
-            dashboard.addView(heading);
             LinearLayout.LayoutParams deviceParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -609,6 +601,23 @@ public final class MainActivity extends Activity {
         deviceValue = addCard(row2, "USED BY HANDHELD");
         tempValue = addCard(row2, "TEMPERATURE");
         dashboard.addView(row2);
+
+        // Battery restriction can stop the service while the screen is off (issue #2).
+        restrictionWarning = text("Android is restricting this app in the background, so "
+                + "bypass may stop while the screen is off. Open App info \u2192 Battery "
+                + "and allow background use.", 11f, ERROR, false);
+        restrictionWarning.setPadding(dp(4), dp(6), dp(4), 0);
+        restrictionWarning.setVisibility(View.GONE);
+        restrictionWarning.setOnClickListener(v -> openAppInfo());
+        dashboard.addView(restrictionWarning);
+
+        TextView copyDiagnostics = text("COPY DIAGNOSTICS", 10f, YELLOW, true);
+        copyDiagnostics.setLetterSpacing(0.08f);
+        copyDiagnostics.setPadding(dp(4), dp(8), dp(4), dp(4));
+        copyDiagnostics.setFocusable(true);
+        copyDiagnostics.setOnClickListener(v -> copyDiagnostics());
+        dashboard.addView(copyDiagnostics, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         return dashboard;
     }
@@ -664,6 +673,69 @@ public final class MainActivity extends Activity {
         action.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, dp(38)));
         return action;
+    }
+
+    private boolean backgroundRestricted() {
+        ActivityManager activities = getSystemService(ActivityManager.class);
+        return Build.VERSION.SDK_INT >= 28 && activities != null
+                && activities.isBackgroundRestricted();
+    }
+
+    private void openAppInfo() {
+        try {
+            startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + getPackageName())));
+        } catch (Throwable error) {
+            Toast.makeText(this, "Could not open App info", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** Copies a privacy-safe report (no account or location data) for bug reports. */
+    private void copyDiagnostics() {
+        telemetryWorker.execute(() -> {
+            String report = diagnosticsReport();
+            runOnUiThread(() -> {
+                ClipboardManager clipboard = getSystemService(ClipboardManager.class);
+                if (clipboard == null) return;
+                clipboard.setPrimaryClip(ClipData.newPlainText("Jesty RP diagnostics", report));
+                Toast.makeText(this, "Diagnostics copied", Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
+    private String diagnosticsReport() {
+        StringBuilder out = new StringBuilder();
+        out.append("Jesty RP Charging Separation ").append(versionLabel()).append('\n');
+        out.append("Device: ").append(Build.MODEL).append('\n');
+        out.append("Firmware: ").append(Build.DISPLAY).append('\n');
+        out.append("Android: ").append(Build.VERSION.RELEASE)
+                .append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
+        out.append("Background restricted: ").append(backgroundRestricted()).append('\n');
+        boolean auto = BypassService.autoLimitMode(prefs);
+        out.append("Bypass on: ").append(prefs.getBoolean("desired_enabled", false))
+                .append(", start on boot: ").append(prefs.getBoolean("auto_on_boot", false))
+                .append('\n');
+        out.append("When to stop: ").append(auto
+                ? String.format(Locale.US, "at %d%%, charge again at %d%%",
+                        BypassService.limitPercent(prefs), BypassService.resumePercent(prefs))
+                : "right away").append('\n');
+        out.append("Service: ").append(BypassService.state()).append(" - ")
+                .append(BypassService.detail()).append('\n');
+        try {
+            PowerTelemetry t = PowerTelemetry.read();
+            out.append(String.format(Locale.US,
+                    "Battery: %d%% %s, %d uA, %.1f C; USB present %s, %s, %.1f W; "
+                            + "limit %d/%d%n",
+                    t.batteryPercent, t.batteryStatus, t.batteryCurrentUa, t.temperatureC,
+                    t.usbPresent, t.usbType, t.usbWatts(), t.limit, t.limitMax));
+        } catch (Throwable error) {
+            out.append("Telemetry error: ").append(error.getMessage()).append('\n');
+        }
+        out.append("Recent events:\n");
+        List<String> recent = BypassService.events(this).recent(80);
+        if (recent.isEmpty()) out.append("(none)\n");
+        for (String line : recent) out.append(line).append('\n');
+        return out.toString();
     }
 
     private void openExternal(String url) {
@@ -764,8 +836,8 @@ public final class MainActivity extends Activity {
                 }
                 if (!prefs.getBoolean("desired_enabled", false)
                         && telemetry.limit != 0 && !offReconcileStarted
-                        && (BypassService.state() == BypassService.State.OFF
-                        || BypassService.state() == BypassService.State.FAILED)) {
+                        && (BypassService.state() == BypassController.State.OFF
+                        || BypassService.state() == BypassController.State.FAILED)) {
                     offReconcileStarted = true;
                     Intent restore = new Intent(this, BypassService.class)
                             .setAction(BypassService.ACTION_DISABLE);
@@ -784,10 +856,10 @@ public final class MainActivity extends Activity {
     }
 
     private void render(PowerTelemetry telemetry) {
-        BypassService.State serviceState = BypassService.state();
+        BypassController.State serviceState = BypassService.state();
         boolean desired = prefs.getBoolean("desired_enabled", false);
         boolean nativeSeparated = telemetry.separationConfirmed();
-        boolean active = desired && serviceState == BypassService.State.ACTIVE
+        boolean active = desired && serviceState == BypassController.State.ACTIVE
                 && nativeSeparated;
         setSeparationVisual(active);
         suppressToggle = true;
@@ -798,7 +870,7 @@ public final class MainActivity extends Activity {
         String detail = BypassService.detail();
         String safetyStop = prefs.getString(BypassService.PREF_LAST_SAFETY_STOP, null);
         if (!desired && telemetry.limit != 0) {
-            if (serviceState == BypassService.State.FAILED) {
+            if (serviceState == BypassController.State.FAILED) {
                 setState("COULD NOT START", ERROR);
             } else {
                 setState("TURNING OFF...", YELLOW);
@@ -808,20 +880,23 @@ public final class MainActivity extends Activity {
             setState("COULD NOT START", ERROR);
             detail = safetyStop + ". Bypass was turned off for safety.";
         } else if (active) {
-            setState("RUNNING FROM USB", YELLOW);
+            setState("RUNNING FROM CHARGER", YELLOW);
         } else if (desired && nativeSeparated) {
             setState("STARTING...", YELLOW);
             detail = "Native bypass active; restoring monitoring";
-        } else if (desired && serviceState == BypassService.State.CHARGING_TO_LIMIT) {
+        } else if (desired && serviceState == BypassController.State.CHARGING_TO_LIMIT) {
             setState(String.format(Locale.US, "CHARGING TO %d%%",
                     BypassService.limitPercent(prefs)), Color.WHITE);
-        } else if (desired && serviceState == BypassService.State.ENABLING) {
+        } else if (desired && serviceState == BypassController.State.ENABLING) {
             setState("STARTING...", YELLOW);
-        } else if (desired && (serviceState == BypassService.State.ARMED
+        } else if (desired && serviceState == BypassController.State.RETRYING
+                && telemetry.usbPresent) {
+            setState("TRYING AGAIN", YELLOW);
+        } else if (desired && (serviceState == BypassController.State.ARMED
                 || !telemetry.usbPresent)) {
             setState("READY", YELLOW);
             detail = "Plug in USB to start";
-        } else if (desired && serviceState == BypassService.State.FAILED) {
+        } else if (desired && serviceState == BypassController.State.FAILED) {
             setState("COULD NOT START", ERROR);
         } else if (desired) {
             setState("STARTING...", YELLOW);
@@ -849,6 +924,8 @@ public final class MainActivity extends Activity {
         tempValue.setText(twoLine(
                 String.format(Locale.US, "%.1f \u00b0C", telemetry.temperatureC),
                 "battery"));
+        restrictionWarning.setVisibility(desired && backgroundRestricted()
+                ? View.VISIBLE : View.GONE);
         diagnostic.setText(Build.MODEL + "  ·  "
                 + (!telemetry.usbPresent ? "On battery"
                 : active ? "Not charging"

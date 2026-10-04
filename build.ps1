@@ -4,7 +4,7 @@ param(
     [string]$JdkHome,
     [string]$Keystore,
     [string]$KeyAlias,
-    [string]$OutputName = 'Jesty-RP-Charging-Separation-1.5.8'
+    [string]$OutputName = 'Jesty-RP-Charging-Separation-1.5.9'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -37,7 +37,8 @@ if (-not $buildTools) {
 }
 
 $platform = Get-ChildItem -LiteralPath (Join-Path $AndroidSdk 'platforms') -Directory |
-    Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'android.jar') } |
+    Where-Object { $_.Name -match '^android-\d+$' -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName 'android.jar')) } |
     Sort-Object { [int]($_.Name -replace '^android-', '') } -Descending |
     Select-Object -First 1
 if (-not $platform) {
@@ -91,7 +92,7 @@ $flatFiles = Get-ChildItem -LiteralPath $compiled -Filter '*.flat' -File |
     Select-Object -ExpandProperty FullName
 & $aapt2 link -o $resourceApk -I $androidJar --manifest (Join-Path $projectRoot 'AndroidManifest.xml') `
     --java $generated --min-sdk-version 28 --target-sdk-version 28 `
-    --version-code 29 --version-name '1.5.8' $flatFiles
+    --version-code 30 --version-name '1.5.9' $flatFiles
 if ($LASTEXITCODE -ne 0) { throw 'aapt2 link failed.' }
 
 $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'src') -Recurse -Filter '*.java' -File |

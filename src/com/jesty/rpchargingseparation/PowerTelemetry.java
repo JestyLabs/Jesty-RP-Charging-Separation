@@ -25,7 +25,8 @@ final class PowerTelemetry {
     final int limit;
     final int limitMax;
 
-    private PowerTelemetry(long batteryCurrentUa, long batteryVoltageUv,
+    // Package-private so tests can build readings without sysfs.
+    PowerTelemetry(long batteryCurrentUa, long batteryVoltageUv,
                            long usbCurrentUa, long usbVoltageUv, long chargeCounterUah,
                            int batteryPercent, float temperatureC, boolean usbPresent,
                            boolean pdActive, String usbType, String batteryStatus,
