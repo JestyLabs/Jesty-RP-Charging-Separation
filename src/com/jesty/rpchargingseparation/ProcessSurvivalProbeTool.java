@@ -1,11 +1,10 @@
 package com.jesty.rpchargingseparation;
 
 /**
- * adb/app_process entry point for the research survival probe.
+ * adb/app_process entry point for process-resilience research.
  *
- * The normal actions reach PServerBinder through the app's existing RootBridge contract.
- * "print-launcher" is intentionally local-only: the adb harness uses it to materialize
- * the exact launch script before asking PServer to run that script as root.
+ * Script-print actions are local-only helpers for the adb harness. Mutating actions sent
+ * through PServer are restricted to fixed research files under /data/local/tmp.
  */
 public final class ProcessSurvivalProbeTool {
     private ProcessSurvivalProbeTool() {}
@@ -14,32 +13,47 @@ public final class ProcessSurvivalProbeTool {
         String action = args == null || args.length == 0 ? "status" : args[0];
         try {
             if ("print-launcher".equals(action)) {
-                int duration = parseDuration(args, 1);
+                int duration = parseInt(args, 1,
+                        ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS);
                 System.out.print(ProcessSurvivalProbeCommand.launcherScript(duration));
+                return;
+            }
+            if ("print-sentinel".equals(action)) {
+                int pid = parseInt(args, 1, -1);
+                long startTicks = parseLong(args, 2, -1L);
+                int lease = parseInt(args, 3, 30);
+                System.out.print(RestoreWatchdogSentinelScript.build(pid, startTicks, lease));
                 return;
             }
 
             switch (action) {
                 case "start":
-                    String command = ProcessSurvivalProbeCommand.launchCommand();
-                    RootBridge.exec(command);
-                    System.out.println("submitted command_chars=" + command.length());
+                    submit(ProcessSurvivalProbeCommand.launchCommand(), "survival probe");
                     return;
                 case "status":
-                    String status = RootBridge.exec(ProcessSurvivalProbeCommand.status());
-                    System.out.print(status == null || status.isEmpty()
-                            ? "no probe log\n" : status);
+                    print(RootBridge.exec(ProcessSurvivalProbeCommand.status()),
+                            "no probe log");
                     return;
                 case "stop":
-                    RootBridge.exec(ProcessSurvivalProbeCommand.stop());
-                    System.out.println("stop marker submitted");
+                    submit(ProcessSurvivalProbeCommand.stop(), "stop marker");
                     return;
                 case "clean":
-                    RootBridge.exec(ProcessSurvivalProbeCommand.clean());
-                    System.out.println("probe files removed");
+                    submit(ProcessSurvivalProbeCommand.clean(), "probe cleanup");
+                    return;
+                case "sentinel-start":
+                    submit(RestoreWatchdogSentinelScript.launchCommand(), "sentinel watchdog");
+                    return;
+                case "sentinel-status":
+                    print(RootBridge.exec(RestoreWatchdogSentinelScript.statusCommand()),
+                            "sentinel pending");
+                    return;
+                case "sentinel-clean":
+                    submit(RestoreWatchdogSentinelScript.cleanCommand(), "sentinel cleanup");
                     return;
                 default:
-                    System.err.println("usage: print-launcher [60..1800] | start | status | stop | clean");
+                    System.err.println("usage: print-launcher [60..1800] | start | status | "
+                            + "stop | clean | print-sentinel <pid> <start_ticks> <lease_s> | "
+                            + "sentinel-start | sentinel-status | sentinel-clean");
                     System.exit(2);
             }
         } catch (Throwable error) {
@@ -49,14 +63,30 @@ public final class ProcessSurvivalProbeTool {
         }
     }
 
-    private static int parseDuration(String[] args, int index) {
-        if (args == null || args.length <= index) {
-            return ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
-        }
+    private static void submit(String command, String label) throws Exception {
+        RootBridge.exec(command);
+        System.out.println(label + " submitted command_chars=" + command.length());
+    }
+
+    private static void print(String value, String empty) {
+        System.out.print(value == null || value.trim().isEmpty() ? empty + "\n" : value);
+    }
+
+    private static int parseInt(String[] args, int index, int fallback) {
+        if (args == null || args.length <= index) return fallback;
         try {
-            return ProcessSurvivalProbeCommand.clampDurationSeconds(Integer.parseInt(args[index]));
+            return Integer.parseInt(args[index]);
         } catch (NumberFormatException ignored) {
-            return ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
+            return fallback;
+        }
+    }
+
+    private static long parseLong(String[] args, int index, long fallback) {
+        if (args == null || args.length <= index) return fallback;
+        try {
+            return Long.parseLong(args[index]);
+        } catch (NumberFormatException ignored) {
+            return fallback;
         }
     }
 }
