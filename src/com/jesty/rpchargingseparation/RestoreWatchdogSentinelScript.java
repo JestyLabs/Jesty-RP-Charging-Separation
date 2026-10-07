@@ -2,16 +2,34 @@ package com.jesty.rpchargingseparation;
 
 /** Builds a harmless shell watchdog that writes only a research sentinel marker. */
 final class RestoreWatchdogSentinelScript {
-    static final String OUTPUT_PATH = "/data/local/tmp/jesty-rp-watchdog-sentinel.out";
+    static final String PREFIX = "/data/local/tmp/jesty-rp-watchdog-sentinel";
+    static final String SCRIPT_PATH = PREFIX + ".sh";
+    static final String OUTPUT_PATH = PREFIX + ".out";
     static final int MIN_LEASE_SECONDS = 5;
     static final int MAX_LEASE_SECONDS = 120;
 
     private RestoreWatchdogSentinelScript() {}
 
+    static int clampLeaseSeconds(int seconds) {
+        return Math.max(MIN_LEASE_SECONDS, Math.min(MAX_LEASE_SECONDS, seconds));
+    }
+
+    static String launchCommand() {
+        return "sh " + SCRIPT_PATH + " >/dev/null 2>&1 &";
+    }
+
+    static String statusCommand() {
+        return "cat " + OUTPUT_PATH + " 2>/dev/null";
+    }
+
+    static String cleanCommand() {
+        return "rm -f " + SCRIPT_PATH + " " + OUTPUT_PATH;
+    }
+
     static String build(int ownerPid, long ownerStartTicks, int requestedLeaseSeconds) {
         if (ownerPid <= 1) throw new IllegalArgumentException("invalid owner pid");
         if (ownerStartTicks <= 0L) throw new IllegalArgumentException("invalid owner starttime");
-        int lease = Math.max(MIN_LEASE_SECONDS, Math.min(MAX_LEASE_SECONDS, requestedLeaseSeconds));
+        int lease = clampLeaseSeconds(requestedLeaseSeconds);
         return "#!/system/bin/sh\n"
                 + "PID=" + ownerPid + "\n"
                 + "START=" + ownerStartTicks + "\n"
