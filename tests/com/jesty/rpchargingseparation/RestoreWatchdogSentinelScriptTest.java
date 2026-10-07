@@ -6,13 +6,22 @@ public final class RestoreWatchdogSentinelScriptTest {
         if (!value) throw new AssertionError(message);
     }
 
-    private static void pserverLaunchIsOperatorFree() {
-        String command = RestoreWatchdogSentinelScript.launchCommand();
-        check(command.equals("sh " + RestoreWatchdogSentinelScript.SCRIPT_PATH),
+    private static void pserverCommandsStayFixedAndChargingBlind() {
+        String launch = RestoreWatchdogSentinelScript.launchCommand();
+        check(launch.equals("sh " + RestoreWatchdogSentinelScript.SCRIPT_PATH),
                 "PServer launch must only execute fixed script");
-        check(!command.contains("&"), "no inline background operator");
-        check(!command.contains(">"), "no inline redirect");
-        check(!command.contains("setsid"), "no setsid");
+        check(!launch.contains("&") && !launch.contains(">") && !launch.contains("setsid"),
+                "launch must avoid inline shell operators and setsid");
+        for (String command : new String[]{
+                launch, RestoreWatchdogSentinelScript.statusCommand(),
+                RestoreWatchdogSentinelScript.stopCommand(),
+                RestoreWatchdogSentinelScript.cleanCommand()}) {
+            check(command.contains(RestoreWatchdogSentinelScript.PREFIX),
+                    "command escaped sentinel namespace: " + command);
+            check(!command.contains("charge_control"), "command touches charging");
+            check(!command.contains("/sys/class/power_supply"), "command touches power sysfs");
+            check(!command.contains("settings put"), "command mutates settings");
+        }
         passed++;
     }
 
@@ -23,6 +32,7 @@ public final class RestoreWatchdogSentinelScriptTest {
         check(script.contains("CUR=${20}"), "field 22 must use positional parameter 20");
         check(script.contains("nohup sh \"$0\" worker"), "script self-detaches worker");
         check(script.contains("kill -0 \"$P\""), "launcher verifies worker survived grace");
+        check(script.contains("SENTINEL_END stop_requested"), "explicit stop is observable");
         check(script.contains("RESTORE_REQUIRED owner_missing"), "owner death marker");
         check(script.contains("RESTORE_REQUIRED owner_mismatch"), "pid reuse marker");
         check(script.contains("RESTORE_REQUIRED lease_expired"), "lease marker");
@@ -55,7 +65,7 @@ public final class RestoreWatchdogSentinelScriptTest {
     }
 
     public static void main(String[] args) {
-        pserverLaunchIsOperatorFree();
+        pserverCommandsStayFixedAndChargingBlind();
         scriptIsResearchOnly();
         leaseIsClamped();
         invalidIdentityFailsClosed();
