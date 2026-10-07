@@ -10,6 +10,7 @@ public final class RestoreWatchdogSentinelScriptTest {
         String script = RestoreWatchdogSentinelScript.build(123, 456789L, 30);
         check(script.contains("PID=123"), "pid pinned");
         check(script.contains("START=456789"), "starttime pinned");
+        check(script.contains("CUR=${20}"), "field 22 must use positional parameter 20");
         check(script.contains("RESTORE_REQUIRED owner_missing"), "owner death marker");
         check(script.contains("RESTORE_REQUIRED owner_mismatch"), "pid reuse marker");
         check(script.contains("RESTORE_REQUIRED lease_expired"), "lease marker");
