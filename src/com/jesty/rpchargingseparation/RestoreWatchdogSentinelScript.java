@@ -14,8 +14,9 @@ final class RestoreWatchdogSentinelScript {
         return Math.max(MIN_LEASE_SECONDS, Math.min(MAX_LEASE_SECONDS, seconds));
     }
 
+    /** PServer gets an operator-free command; the script performs its own bounded detach. */
     static String launchCommand() {
-        return "sh " + SCRIPT_PATH + " >/dev/null 2>&1 &";
+        return "sh " + SCRIPT_PATH;
     }
 
     static String statusCommand() {
@@ -34,7 +35,14 @@ final class RestoreWatchdogSentinelScript {
                 + "PID=" + ownerPid + "\n"
                 + "START=" + ownerStartTicks + "\n"
                 + "OUT=" + OUTPUT_PATH + "\n"
-                + "rm -f \"$OUT\"\n"
+                + "if [ \"$1\" != worker ]; then\n"
+                + "  rm -f \"$OUT\"\n"
+                + "  nohup sh \"$0\" worker </dev/null >/dev/null 2>&1 &\n"
+                + "  P=$!\n"
+                + "  sleep 1\n"
+                + "  kill -0 \"$P\" 2>/dev/null || exit 21\n"
+                + "  exit 0\n"
+                + "fi\n"
                 + "END=$(( $(date +%s) + " + lease + " ))\n"
                 + "while [ $(date +%s) -lt $END ]; do\n"
                 + "  S=$(cat /proc/$PID/stat 2>/dev/null) || { echo 'RESTORE_REQUIRED owner_missing' > \"$OUT\"; exit 0; }\n"
