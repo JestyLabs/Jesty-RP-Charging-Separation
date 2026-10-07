@@ -12,3 +12,7 @@ Keep changes narrow, reviewable, and tied to measured device behavior.
 
 Before submitting a change, run a clean unsigned build and review the complete
 diff for personal information.
+
+## Research and attribution
+
+Keep existing license, SPDX and provenance notices intact. If a change materially uses external code, research or prior art, include the upstream project and an exact commit or URL where practical. Record project-specific device findings and test provenance in [PROVENANCE.md](PROVENANCE.md).
