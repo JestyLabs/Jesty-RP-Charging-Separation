@@ -3,259 +3,243 @@
 Status: **research only**  
 Branch: `research/pserver-process-resilience`
 
-This workstream does not change release behavior, the charging state machine, charging sysfs
-writes, boot behavior, or the Android manifest. It exists to answer whether a small,
-bounded privileged process launched through Retroid's existing `PServerBinder` can
-survive the vendor process cleaner that terminates the normal app process.
+This workstream does not change release behavior, the charging state machine, charging
+sysfs writes, boot behavior, or the Android manifest.
 
-## Why investigate this
+## Research question
 
-Issue #2 on the Flip 2 12 GB `.311` firmware showed that the auto-limit controller can
-stop receiving events because the whole Android process is terminated. The Retroid
-**Whitelist Application** and **Clean process when standby -> Ignored packages** controls
-each independently kept the controller alive in the reporter's physical tests.
+Issue #2 showed that on Flip 2 12 GB firmware `.311`, the existing controller works
+correctly when the Android service remains alive, but Retroid can terminate that process
+unless one of its vendor process-protection controls is used.
 
-The current controller already has a useful architectural property:
-`BypassController` has no Android dependencies. Android lifecycle, notifications,
-wake locks and PServer/sysfs access are adapters around it. That means a future
-process-resilient runtime could potentially reuse the same state machine rather than
-duplicating the 80/70 hysteresis and safety logic.
+The first question is therefore:
 
-The research question is deliberately narrower:
+> Can a bounded process launched through Retroid's existing `PServerBinder` survive the
+> vendor cleaner independently of the Android app process?
 
-> Can PServer launch a process whose lifetime is independent of the app UID/process on
-> the affected Retroid firmware?
-
-Until that is physically proven, moving charging control into a daemon is only a design
-option, not a planned fix.
+That must be answered before giving any privileged helper charging authority.
 
 ## Evidence ledger
 
 ### PROVEN in this project
 
-- The app can transact with `PServerBinder` using transaction code 0 and
+- The app uses `PServerBinder` transaction code `0` with
   `String[]{command, "0"}`.
-- That bridge already performs the native charging-control reads/writes used by v1.5.9.
+- That bridge already performs released charging-control reads/writes.
 - `BypassController` is Android-free and host-tested.
-- The controller can adopt an already-active native separation after a normal process
-  restart instead of blindly rewriting it.
-- On the issue #2 Flip 2 `.311`, either Retroid vendor protection mechanism was enough
-  to keep the existing Android service/controller alive during the reporter's charging
-  test; Whitelist Application also preserved the foreground notification.
+- On the issue #2 Flip 2 `.311`, either Retroid **Whitelist Application** or
+  **Clean process when standby -> Ignored packages** independently kept the existing
+  service alive long enough to stop at 80%.
+- Whitelist Application also preserved foreground-notification behavior in that test.
 
-### PROVEN in the Thor project, not yet on Retroid
+### PROVEN in the Thor project, not Retroid
 
-The Thor project uses the same PServer wire contract to launch a root `app_process`
-from the installed APK. That proves the mechanism is technically viable on the shared
-AYN/Retroid-style bridge, but it does not prove Retroid cleaner behavior.
+The Thor project can use the same PServer wire contract to launch root `app_process`
+code from the installed APK.
+
+That proves the mechanism is viable on the related vendor bridge. It does not prove
+Flip 2 cleaner behavior.
 
 ### External implementation evidence
 
-GameNative's PServer driver targets AYN/Retroid-class devices and implements a detached
-root "babysitter" using `nohup` + `setsid`. Its stated purpose is to survive the app
-process and restore a persisted power baseline when that app dies.
+Public AYN/Retroid projects show long-lived PServer-launched helpers are a real pattern.
+GameNative uses a detached root babysitter for crash recovery.
 
-That is useful corroboration that detached children are a real PServer use case. It is
-**not** accepted as proof that our Flip 2 cleaner leaves such a process alive.
+External implementations disagree on launcher details. One Thor-side reverse-engineering
+effort reports that `setsid app_process` can fail and that inline `&`/redirection can be
+unreliable through pservice.
 
-### INFERRED
+Those observations are useful design input, not Retroid proof.
 
-- A root process in a separate session is likely outside the normal app-UID process-kill
-  path used by Retroid's cleaner.
-- If so, a small privileged controller could preserve threshold/safety monitoring even
-  when the UI/service process is killed.
+### UNTESTED on our Retroid hardware
 
-### UNTESTED
-
-- Survival on the maintainer Flip 2 `.130`.
-- Survival on the reporter Flip 2 12 GB `.311`.
-- Survival after an individual Recents swipe.
-- Survival after Retroid "Clear all".
-- Survival after standby cleaner action.
-- Survival after Android Force Stop.
-- Whether the detached process is placed in a cgroup that the Retroid cleaner also kills.
-- Whether a detached root process can maintain the required scheduling/wake behavior
-  during screen-off/deep sleep.
-- Safe package update/uninstall handling.
-- Safe authenticated app <-> daemon IPC on Retroid.
-- Any production migration of charging control.
+- survival on local Flip 2 `.130`;
+- survival on reporter Flip 2 12 GB `.311`;
+- individual Recents swipe;
+- Retroid Clear All;
+- standby cleaner;
+- Android Force Stop;
+- Retroid cgroup placement;
+- deep-sleep scheduling;
+- package replacement/uninstall behavior.
 
 ## Research probe
 
-The branch contains a probe with a deliberately tiny capability surface:
+The branch contains:
 
-- `ProcessSurvivalProbeCommand`: pure command builder.
-- `ProcessSurvivalProbe`: bounded root `app_process` heartbeat.
-- `ProcessSurvivalProbeTool`: manual `adb/app_process` entry point that calls the
-  existing `RootBridge`.
-- `scripts/device-process-survival-probe.ps1`: convenience harness.
+- `ProcessSurvivalProbeCommand`: pure command/script builder;
+- `ProcessSurvivalProbe`: bounded root heartbeat;
+- `ProcessSurvivalProbeTool`: manual adb/app_process entry point;
+- `LinuxProcessIdentity`: host-tested `/proc/<pid>/stat` identity parser;
+- `RestoreOnlyWatchdogPolicy`: pure fail-open policy model;
+- `RestoreWatchdogSentinelScript`: harmless restore-required sentinel;
+- `scripts/device-process-survival-probe.ps1`: device harness.
 
 The probe:
 
 - has a 60-1800 second lease;
 - defaults to 10 minutes;
 - writes only under `/data/local/tmp/jesty-rp-process-survival*`;
-- records PID, UID, SELinux context, cgroup membership and heartbeat gaps;
+- records PID, UID, SELinux context, boot ID, cgroup, OOM score, process group/session,
+  starttime ticks and heartbeat gaps;
+- has a single-instance lock;
 - has an explicit stop marker;
-- has a single-instance file lock;
-- is not registered in the manifest;
-- is not reachable from the normal app UI;
-- does not read or write charging sysfs;
-- does not execute `settings put`;
-- does not change Retroid whitelist/cleaner settings.
+- is not in the manifest or normal UI;
+- does not read/write charging sysfs;
+- does not execute `settings put`.
 
-Host tests fail if the command builder gains charging-control paths or Settings writes.
+## Launcher hardening
 
-## Physical test protocol
+The initial research launcher used a long inline PServer command with `nohup + setsid`.
+That was deliberately replaced before device testing.
 
-Use a research APK built from this branch. Keep charging separation **OFF** for the
-entire test.
+Current flow:
 
-### 0. Preconditions
+```text
+ADB stages fixed launcher script in /data/local/tmp
+        |
+        v
+PServer receives only:
+sh /data/local/tmp/jesty-rp-process-survival-launch.sh
+        |
+        v
+script launches bounded nohup app_process
+        |
+        +-- no setsid
+        +-- one-second parent grace
+        +-- verifies child still exists before launcher exits
+```
 
-- Disable Jesty RP Charging Separation in Retroid **Whitelist Application**.
-- Remove it from **Clean process when standby -> Ignored packages**.
-- Confirm the device is visible in `adb devices`.
+This isolates the physical experiment from vendor shell-parser quirks.
 
-### 1. Clean previous probe artifacts
+## Host validation
+
+Current host tests:
+
+```text
+Process survival probe command tests passed: 3
+Restore-only watchdog policy tests passed: 5
+Linux process identity tests passed: 4
+Restore watchdog sentinel script tests passed: 3
+```
+
+The harmless sentinel was also exercised against a disposable Linux owner process:
+
+```text
+owner alive  -> no restore marker
+owner killed -> RESTORE_REQUIRED owner_missing
+```
+
+Classification: **HOST-PROVEN, DEVICE-UNTESTED**.
+
+## Physical lifecycle protocol
+
+Keep charging separation **OFF** for the whole survival test.
+
+### Preconditions
+
+- remove Jesty RP Charging Separation from Retroid Whitelist Application;
+- remove it from Clean process when standby -> Ignored packages;
+- connect authorized ADB;
+- install a research APK from this branch.
+
+### Start clean
 
 ```powershell
 .\scripts\device-process-survival-probe.ps1 -Action Clean
-```
-
-### 2. Start a ten-minute lease
-
-```powershell
 .\scripts\device-process-survival-probe.ps1 -Action Start -DurationSeconds 600
 ```
 
-Expected submission output contains a command length and duration. This only proves that
-the PServer transaction was accepted.
-
-### 3. Prove the root child really started
-
-Wait a few seconds:
+Then:
 
 ```powershell
 .\scripts\device-process-survival-probe.ps1 -Action Status
 ```
 
-Required evidence before continuing:
+Required before continuing:
 
-- a `START` line;
+- `START probe_version=2`;
 - `uid=0`;
-- multiple `HEARTBEAT` lines with the same PID;
-- an `IDENTITY` line;
-- a `CGROUP` line.
+- several heartbeats;
+- fixed PID;
+- `PROCESS ... start_ticks=...`;
+- `boot_id=...`;
+- cgroup information.
 
-If `uid` is not 0, stop. The intended PServer-root mechanism has not been proven.
+### Single-variable checks
 
-### 4. Single-variable survival checks
+Capture status before and after each action:
 
-Run `Status` immediately before and after each action. Do not combine actions.
+1. close the dashboard normally;
+2. swipe only the app from Recents;
+3. Retroid Clear All;
+4. standby cleaner;
+5. Android Force Stop last.
 
-1. Close the normal app.
-2. Swipe only the app from Recents.
-3. Use Retroid Clear All.
-4. Allow/trigger the normal standby-cleaner behavior.
-5. Only after the above: Android Force Stop.
+**PROVEN SURVIVAL** requires the same PID/starttime identity and a continuing heartbeat
+sequence with no new START line.
 
-For each action, record:
+A large `gap_ms` means lifecycle survived but scheduling paused. That distinction is
+important.
 
-- last heartbeat before;
-- first heartbeat after;
-- PID;
-- `gap_ms`;
-- whether a new `START` appeared.
-
-### Interpretation
-
-**PROVEN SURVIVAL** for one action requires:
-
-- same PID before and after;
-- heartbeat sequence continues;
-- no new `START`;
-- no evidence that the probe was relaunched.
-
-A long `gap_ms` means the process survived but was not scheduled for that interval.
-That is an important distinction: lifecycle survival alone does **not** prove it can
-implement the charging threshold during deep sleep.
-
-If the heartbeat ends exactly at the cleaner action, detached PServer ownership does not
-solve issue #2 by itself.
-
-### 5. Stop explicitly
+### Stop
 
 ```powershell
 .\scripts\device-process-survival-probe.ps1 -Action Stop
-```
-
-Then inspect once more:
-
-```powershell
 .\scripts\device-process-survival-probe.ps1 -Action Status
 ```
 
-Expected final line:
+Expected final event:
 
 ```text
-END reason=stop_requested ...
+END reason=stop_requested
 ```
 
-If forgotten, the probe self-terminates when its lease expires.
+The lease is a backstop if explicit stop is forgotten.
 
-## Architecture only if survival is proven
+## Current architecture decision
 
-A production design should keep the existing separation between policy and platform:
+Do **not** move the full charging controller into root at this stage.
+
+Preferred layering:
 
 ```text
-Android process
-  UI / notification / config
-          |
-          | authenticated narrow IPC
-          v
-privileged ChargingDaemon
-  BypassController
-    Hardware -> direct sysfs adapter
-    Settings -> versioned desired/config snapshot
-    Platform -> clock, scheduling, logging, safety stop
+Retroid vendor process protection
+        |
+        v
+Android foreground service
+  BypassController remains policy owner
+        |
+        +-- threshold/hysteresis
+        +-- retries
+        +-- wake lock
+        +-- safety monitoring
+        |
+        v
+future restore-only root watchdog
+  may restore normal charging
+  may never enable separation
 ```
 
-The privileged process must **not** expose an arbitrary-shell IPC endpoint. The PServer
-bridge is only a bootstrap mechanism.
+Why:
 
-## Required production invariants
+- the `.311` evidence shows current charging logic works when alive;
+- vendor process protection fixes the demonstrated failure;
+- a full root controller adds much more privileged state than the evidence justifies;
+- the remaining independent safety gap is abrupt death while native separation is active.
 
-These are stop conditions, not optional polish:
+See `PROCESS-RESILIENCE-DECISION.md` and `RESTORE-ONLY-WATCHDOG-DESIGN.md`.
 
-1. **Explicit OFF wins.** A stale daemon must never re-enable separation after the user
-   turned it off.
-2. **Lease / owner freshness.** An orphan daemon must expire to a safe state.
-3. **Single instance.** Versioned lock + runtime identity; never two controllers writing
-   the same node.
-4. **Version handshake.** An updated APK must identify and retire an incompatible daemon
-   before enabling a successor.
-5. **Fail safe to normal charging.** Lost config, broken IPC, invalid telemetry or stale
-   ownership must not leave unmonitored separation active.
-6. **No arbitrary root command IPC.** Closed commands and validated values only.
-7. **Authenticated peer.** Verify the app UID on the local socket, not merely a protocol
-   string.
-8. **Package replacement/uninstall story.** The daemon cannot be allowed to persist
-   indefinitely after its owner disappears.
-9. **Charging state machine stays single-source.** Reuse `BypassController`; do not
-   fork a second implementation of hysteresis/safety logic.
-10. **Physical deep-sleep proof before migration.** Surviving process cleaning is
-    necessary but not sufficient.
+## Next gates
 
-## Next research step after lifecycle proof
+Before any watchdog receives charging authority:
 
-If the root probe survives the relevant Retroid cleaner, the next workstream is a
-**wake/scheduling probe**, still without charging writes:
+1. prove detached survival on Retroid;
+2. measure screen-off/deep-sleep heartbeat gaps;
+3. prove exact PID/starttime identity on-device;
+4. run the harmless sentinel on-device;
+5. test Force Stop and package update behavior;
+6. define restore-write retry/failure policy;
+7. only then consider a restore-only charging prototype.
 
-- record heartbeat behavior screen-on vs screen-off;
-- quantify deep-sleep scheduling gaps;
-- investigate the smallest safe wake mechanism available to a root `app_process`;
-- prove clean release of that wake mechanism;
-- only then prototype a read-only battery telemetry loop.
-
-No charging-control migration should happen before those two proofs are complete.
+No production charging daemon is justified by current evidence.
