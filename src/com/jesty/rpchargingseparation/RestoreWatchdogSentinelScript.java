@@ -5,6 +5,7 @@ final class RestoreWatchdogSentinelScript {
     static final String PREFIX = "/data/local/tmp/jesty-rp-watchdog-sentinel";
     static final String SCRIPT_PATH = PREFIX + ".sh";
     static final String OUTPUT_PATH = PREFIX + ".out";
+    static final String STOP_PATH = PREFIX + ".stop";
     static final int MIN_LEASE_SECONDS = 5;
     static final int MAX_LEASE_SECONDS = 120;
 
@@ -15,16 +16,11 @@ final class RestoreWatchdogSentinelScript {
     }
 
     /** PServer gets an operator-free command; the script performs its own bounded detach. */
-    static String launchCommand() {
-        return "sh " + SCRIPT_PATH;
-    }
-
-    static String statusCommand() {
-        return "cat " + OUTPUT_PATH + " 2>/dev/null";
-    }
-
+    static String launchCommand() { return "sh " + SCRIPT_PATH; }
+    static String statusCommand() { return "cat " + OUTPUT_PATH + " 2>/dev/null"; }
+    static String stopCommand() { return "touch " + STOP_PATH; }
     static String cleanCommand() {
-        return "rm -f " + SCRIPT_PATH + " " + OUTPUT_PATH;
+        return "rm -f " + SCRIPT_PATH + " " + OUTPUT_PATH + " " + STOP_PATH;
     }
 
     static String build(int ownerPid, long ownerStartTicks, int requestedLeaseSeconds) {
@@ -35,8 +31,9 @@ final class RestoreWatchdogSentinelScript {
                 + "PID=" + ownerPid + "\n"
                 + "START=" + ownerStartTicks + "\n"
                 + "OUT=" + OUTPUT_PATH + "\n"
+                + "STOP=" + STOP_PATH + "\n"
                 + "if [ \"$1\" != worker ]; then\n"
-                + "  rm -f \"$OUT\"\n"
+                + "  rm -f \"$OUT\" \"$STOP\"\n"
                 + "  nohup sh \"$0\" worker </dev/null >/dev/null 2>&1 &\n"
                 + "  P=$!\n"
                 + "  sleep 1\n"
@@ -45,6 +42,7 @@ final class RestoreWatchdogSentinelScript {
                 + "fi\n"
                 + "END=$(( $(date +%s) + " + lease + " ))\n"
                 + "while [ $(date +%s) -lt $END ]; do\n"
+                + "  if [ -e \"$STOP\" ]; then echo 'SENTINEL_END stop_requested' > \"$OUT\"; rm -f \"$STOP\"; exit 0; fi\n"
                 + "  S=$(cat /proc/$PID/stat 2>/dev/null) || { echo 'RESTORE_REQUIRED owner_missing' > \"$OUT\"; exit 0; }\n"
                 + "  R=${S##*) }\n"
                 + "  set -- $R\n"
