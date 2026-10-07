@@ -1,0 +1,16 @@
+version = 1
+SPDX-PackageName = "Jesty-RP-Charging-Separation"
+SPDX-PackageSupplier = "Organization: Jesty Labs"
+SPDX-PackageDownloadLocation = "https://github.com/JestyLabs/Jesty-RP-Charging-Separation"
+
+[[annotations]]
+path = ["src/**/*.java", "tests/**/*.java", "scripts/**/*.ps1", "build.ps1", "AndroidManifest.xml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Jesty Labs contributors"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+[[annotations]]
+path = ["PROVENANCE.md", "CONTRIBUTING.md", "docs/**/*.md", ".github/**/*.md", ".github/**/*.yml", ".github/**/*.yaml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Jesty Labs contributors"
+SPDX-License-Identifier = "GPL-3.0-only"
