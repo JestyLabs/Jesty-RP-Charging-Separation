@@ -5,6 +5,8 @@
 
 This file keeps technical provenance for Jesty RP Charging Separation explicit without claiming ownership of generic Android, Retroid or AYN platform mechanisms.
 
+See [docs/RESEARCH-WORKFLOW.md](docs/RESEARCH-WORKFLOW.md) for the standing workflow used before publishing substantial new reverse-engineering or cross-project findings.
+
 ## Scope and attribution rule
 
 When project work materially depends on external code, research or prior art, record the upstream source and an exact URL or commit where practical. When a claim comes from this project, preserve the commit, issue/PR, device build and test evidence that established it.
