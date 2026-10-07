@@ -79,6 +79,54 @@ Current status:
 - **UNTESTED:** Retroid Whitelist Application uses that exact key/format.
 - **PLAN:** read-only discovery first; no release or charging-behavior change until the Retroid backend is proven.
 
+
+### JRPCS-RR-20261007-PSERVER-PROCESS-RESILIENCE
+
+Primary work: [PR #9](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/pull/9)
+
+Research goal:
+
+Determine whether a bounded privileged helper launched through the already-used
+`PServerBinder` can survive Retroid process cleanup, and define the smallest safe role
+such a helper could have.
+
+Project findings recorded in PR #9:
+
+- **PROVEN from current code:** `BypassController` remains Android-free and can reconcile
+  an already-active native separation after process restart.
+- **PROVEN from current code:** ACTIVE -> USB unplug transitions to ARMED without restoring
+  the non-zero native limit; current `destroy()` does not restore from ARMED.
+- **PROVEN from current code:** a later restart while unplugged does restore that non-zero
+  limit, so the remaining risk depends on whether process recovery actually happens.
+- **HOST-PROVEN, DEVICE-UNTESTED:** the harmless owner-death sentinel can self-detach,
+  stay quiet while its exact owner identity is alive, emit `RESTORE_REQUIRED` after
+  owner death, and stop through an explicit marker.
+- **HOST-PROVEN, DEVICE-UNTESTED:** PID + `/proc/PID/stat` starttime rejects PID reuse.
+- **DESIGN DECISION:** do not move the full charging controller into root on current
+  evidence. Prefer Retroid process protection plus the existing Android controller, with
+  a possible future restore-only safety watchdog.
+- **UNTESTED:** detached-helper survival, cgroup behavior, deep-sleep scheduling and the
+  harmless sentinel on Retroid hardware.
+
+Public prior art reviewed during this work:
+
+- GameNative, reference commit
+  `7d06fc32f119bb35ae2740827ca2a47ce9034cd4`: its AYN/Retroid PServer driver includes
+  crash-safe baseline recovery and a detached root babysitter pattern.
+- Thor Wayfinder, reference commit
+  `305d3ad824e200c936fc270d044d9db3ecc800ee`: documents a `PServerBinder` client
+  contract using `[command, "0"]` from stock-settings reverse engineering and records
+  adjacent vendor pservice behavior.
+
+These are recorded as prior art for mechanisms and investigation direction. They are not
+treated as proof of Flip 2 behavior, and PR #9 does not copy a production watchdog
+implementation from either project.
+
+The project still treats the server-side semantic meaning of the PServer String-array
+second element (`"0"` versus public clients using `"1"`) as **UNKNOWN** until the
+vendor service itself or controlled hardware evidence establishes it.
+
+
 ## Evidence discipline
 
 Technical claims should be labelled internally as:
