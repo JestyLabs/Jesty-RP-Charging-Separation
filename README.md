@@ -160,7 +160,8 @@ Free and open source. No features locked behind donations.
 [Device validation](docs/DEVICE-VALIDATION.md) · 
 [Live results](docs/LIVE-RESULTS.md) · 
 [Benchmarks](docs/BENCHMARKS.md) · 
-[Release integrity](docs/RELEASE-INTEGRITY.md)
+[Release integrity](docs/RELEASE-INTEGRITY.md) · 
+[Research provenance](PROVENANCE.md)
 
 <details>
 <summary><strong>Technical implementation</strong></summary>
