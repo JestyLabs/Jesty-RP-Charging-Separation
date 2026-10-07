@@ -7,30 +7,34 @@ public final class ProcessSurvivalProbeCommandTest {
         if (!condition) throw new AssertionError(message);
     }
 
-    private static void launchIsBoundedAndChargingBlind() {
-        String command = ProcessSurvivalProbeCommand.launch(
-                ProcessSurvivalProbeCommand.MAX_DURATION_SECONDS);
+    private static void binderCommandIsTinyAndOperatorFree() {
+        String command = ProcessSurvivalProbeCommand.launchCommand();
         check(command.length() <= ProcessSurvivalProbeCommand.MAX_PSERVER_COMMAND_CHARS,
                 "launch command exceeds PServer ceiling: " + command.length());
-        check(command.contains("app_process / "
-                        + ProcessSurvivalProbeCommand.PROBE_CLASS),
-                "launch must target the fixed probe class");
-        check(command.contains("nohup"), "probe must detach stdio");
-        check(command.contains("setsid"), "probe should use a new session when available");
-        check(!command.contains("charge_control"), "probe must not touch charge controls");
-        check(!command.contains("/sys/class/power_supply"),
-                "probe must not touch power-supply sysfs");
-        check(!command.contains("settings put"), "probe must not mutate Settings");
+        check(command.equals("sh " + ProcessSurvivalProbeCommand.LAUNCHER_PATH),
+                "binder command must only execute the staged script");
+        check(!command.contains("&"), "binder command must not background inline");
+        check(!command.contains(">"), "binder command must not redirect inline");
+        check(!command.contains("setsid"), "binder command must not use setsid");
         passed++;
     }
 
-    private static void durationIsClamped() {
-        String low = ProcessSurvivalProbeCommand.launch(-1);
-        String high = ProcessSurvivalProbeCommand.launch(Integer.MAX_VALUE);
+    private static void launcherScriptIsBoundedAndChargingBlind() {
+        String low = ProcessSurvivalProbeCommand.launcherScript(-1);
+        String high = ProcessSurvivalProbeCommand.launcherScript(Integer.MAX_VALUE);
         check(low.contains(" " + ProcessSurvivalProbeCommand.MIN_DURATION_SECONDS
                 + " </dev/null"), "minimum duration clamp");
         check(high.contains(" " + ProcessSurvivalProbeCommand.MAX_DURATION_SECONDS
                 + " </dev/null"), "maximum duration clamp");
+        check(high.contains("app_process / " + ProcessSurvivalProbeCommand.PROBE_CLASS),
+                "launcher must target fixed probe class");
+        check(high.contains("nohup"), "launcher must detach stdio");
+        check(high.contains("sleep 1"), "launcher must keep parent alive briefly");
+        check(!high.contains("setsid"), "launcher must avoid unproven setsid path");
+        check(!high.contains("charge_control"), "probe must not touch charge controls");
+        check(!high.contains("/sys/class/power_supply"),
+                "probe must not touch power-supply sysfs");
+        check(!high.contains("settings put"), "probe must not mutate Settings");
         passed++;
     }
 
@@ -48,8 +52,8 @@ public final class ProcessSurvivalProbeCommandTest {
     }
 
     public static void main(String[] args) {
-        launchIsBoundedAndChargingBlind();
-        durationIsClamped();
+        binderCommandIsTinyAndOperatorFree();
+        launcherScriptIsBoundedAndChargingBlind();
         supportCommandsStayInTempOnly();
         System.out.println("Process survival probe command tests passed: " + passed);
     }
