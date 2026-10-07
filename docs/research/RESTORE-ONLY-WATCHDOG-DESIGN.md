@@ -123,14 +123,30 @@ Required behavior:
 2. read back the node;
 3. only exit normally after readback is `0`.
 
-The retry/backoff policy for a failed restore is still **UNRESOLVED**. It should be
-designed separately because two requirements conflict:
+The host-tested `RestoreRetryPolicy` now resolves the policy side of this conflict:
 
-- do not abandon an unsafe/unmonitored state after one failed write;
-- do not leave an orphan privileged process running forever.
+```text
+restore attempt -> readback 0      -> exit
+restore attempt -> no verified 0   -> retry
+```
 
-No production watchdog should be implemented until this failure policy is explicit and
-physically tested.
+Backoff is bounded:
+
+```text
+1 s -> 2 s -> 5 s -> 10 s -> 30 s -> 60 s -> 60 s ...
+```
+
+Once owner loss or stale ownership has made restoration mandatory, the original watchdog
+lease no longer authorizes abandoning the restore. The helper may exit only after normal
+charging is verified.
+
+This deliberately chooses a sleeping restore-only process retrying once per minute over
+leaving a known unmonitored separation behind. Because the helper has no authority to
+enable separation, its orphan risk is much smaller than that of a full charging daemon;
+a reboot remains a natural hard lifetime boundary.
+
+**Policy is resolved; device behavior is not.** Actual restore writes, readback failure
+modes and long-lived retry behavior still require physical validation before production.
 
 ## Production gate
 
@@ -149,21 +165,26 @@ Before any charging write is added to a watchdog:
 The harmless sentinel version was exercised on a Linux host with a disposable owner
 process. This is **HOST-PROVEN, DEVICE-UNTESTED** evidence only.
 
-Observed sequence:
+Observed host sequences:
 
 ```text
-owner alive  -> sentinel did not fire
-owner killed -> RESTORE_REQUIRED owner_missing
+self-detach launcher returned in ~1.0 s
+owner alive      -> sentinel did not fire
+owner killed     -> RESTORE_REQUIRED owner_missing
+explicit Stop    -> SENTINEL_END stop_requested
 ```
 
-The same run also executed the research host tests:
+The research host-test surface is now:
 
 ```text
 Process survival probe command tests passed: 3
 Restore-only watchdog policy tests passed: 5
 Linux process identity tests passed: 4
-Restore watchdog sentinel script tests passed: 3
+Restore watchdog sentinel script tests passed: 4
+Restore retry policy tests passed: 2
 ```
+
+That is 18 JDK policy/command checks, plus the static no-charging/no-vendor-policy guard.
 
 During this work a shell bug was caught before device use: positional field 20 must be
 addressed as `${20}`, not `$20`, otherwise POSIX shell can parse it as `$2` followed
@@ -172,3 +193,45 @@ by `0`. The test now pins the correct syntax.
 This host result proves only the ownership/sentinel logic under a normal Linux shell. It
 does not prove Android toybox behavior, PServer launch behavior, Retroid cgroups, or
 screen-off scheduling.
+
+
+## Harmless Retroid sentinel protocol
+
+After the basic detached survival probe has proven that PServer can keep a helper alive,
+the branch contains a second device harness that still has **zero charging authority**:
+
+```powershell
+.\scripts\device-watchdog-sentinel.ps1 -Action Start -LeaseSeconds 30
+.\scripts\device-watchdog-sentinel.ps1 -Action Status
+```
+
+It captures the currently running app's exact PID + `/proc/PID/stat` starttime, stages
+a fixed shell script, and asks PServer to run only:
+
+```text
+sh /data/local/tmp/jesty-rp-watchdog-sentinel.sh
+```
+
+The script self-detaches its worker and then watches the owner identity. Expected
+research outcomes are only:
+
+```text
+RESTORE_REQUIRED owner_missing
+RESTORE_REQUIRED owner_mismatch
+RESTORE_REQUIRED lease_expired
+SENTINEL_END stop_requested
+```
+
+None of those performs a restore; they only show what a future watchdog **would** have
+decided.
+
+Clean termination:
+
+```powershell
+.\scripts\device-watchdog-sentinel.ps1 -Action Stop
+.\scripts\device-watchdog-sentinel.ps1 -Action Status
+.\scripts\device-watchdog-sentinel.ps1 -Action Clean
+```
+
+Do not run this before the simpler survival probe has established the PServer launch
+behavior on the device.
