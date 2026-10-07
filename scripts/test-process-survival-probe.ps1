@@ -13,11 +13,15 @@ $sources = @(
     (Join-Path $root "src\$package\LinuxProcessIdentity.java"),
     (Join-Path $root "src\$package\RestoreWatchdogSentinelScript.java"),
     (Join-Path $root "src\$package\RestoreRetryPolicy.java"),
+    (Join-Path $root "src\$package\BypassController.java"),
+    (Join-Path $root "src\$package\ChargeLimitPolicy.java"),
+    (Join-Path $root "src\$package\PowerTelemetry.java"),
     (Join-Path $root "tests\$package\ProcessSurvivalProbeCommandTest.java"),
     (Join-Path $root "tests\$package\RestoreOnlyWatchdogPolicyTest.java"),
     (Join-Path $root "tests\$package\LinuxProcessIdentityTest.java"),
     (Join-Path $root "tests\$package\RestoreWatchdogSentinelScriptTest.java"),
-    (Join-Path $root "tests\$package\RestoreRetryPolicyTest.java")
+    (Join-Path $root "tests\$package\RestoreRetryPolicyTest.java"),
+    (Join-Path $root "tests\$package\BypassCrashWindowTest.java")
 )
 
 & javac -encoding UTF-8 -source 8 -target 8 -d $output @sources
@@ -28,7 +32,8 @@ foreach ($test in @(
     'RestoreOnlyWatchdogPolicyTest',
     'LinuxProcessIdentityTest',
     'RestoreWatchdogSentinelScriptTest',
-    'RestoreRetryPolicyTest'
+    'RestoreRetryPolicyTest',
+    'BypassCrashWindowTest'
 )) {
     & java -cp $output "com.jesty.rpchargingseparation.$test"
     if ($LASTEXITCODE -ne 0) { throw "$test failed." }
