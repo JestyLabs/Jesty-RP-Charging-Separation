@@ -77,8 +77,42 @@ appears in the saved events between those times. This strongly suggests that
 the process or service stopped, but the diagnostics do not establish whether
 the cause was memory pressure, a crash, a Recents/Task Manager action, or a
 vendor policy. `Background restricted: false` does not rule out those causes.
-The pending diagnostic branch records Android's previous process exit reasons
-and task-removal events; keep issue #2 open.
+
+The same reporter then isolated Retroid's two vendor process-protection
+controls. With only **Clean process when standby -> Ignored packages** enabled,
+the service survived and stopped charging at 80%. With only **Whitelist
+Application** enabled, it also survived and stopped at 80%; Whitelist
+Application additionally preserved the foreground notification when the
+dashboard was closed. This proves that either vendor protection was sufficient
+for the tested Flip 2 12 GB .311 session. It does **not** prove which setting
+key or storage format backs either Retroid UI.
+
+### Read-only Retroid Whitelist Application backend proof
+
+The diagnostic branch intentionally does not change process-protection state.
+**COPY DIAGNOSTICS** performs one privileged read, `settings list system`,
+through the already-used `PServerBinder`, then filters the result locally.
+`app_whiteList` is reported as an OdinTools-derived candidate only; do not call
+it the Retroid backend until a physical before/after test proves the link.
+
+On each firmware under test, capture these three samples without changing
+charging settings:
+
+1. Remove Jesty RP Charging Separation from **Whitelist Application** and from
+   **Clean process when standby -> Ignored packages**. Copy diagnostics.
+2. Add only Jesty RP Charging Separation to **Whitelist Application** using the
+   Retroid UI. Copy diagnostics again.
+3. Remove it from **Whitelist Application** again. Copy diagnostics a third
+   time.
+
+Compare the **Relevant system settings** blocks. The Whitelist Application
+backend is proven only when an exact package token or other setting change
+appears when the UI entry is added and reverses when it is removed. Repeat the
+same one-variable sequence for **Clean process when standby -> Ignored
+packages** to identify that separate backend. Prefer evidence from both the
+maintainer Flip 2 .130 and reporter Flip 2 .311 before adding any write path.
+A read failure or missing `app_whiteList` remains **unknown**, not
+"unsupported" or "unprotected".
 
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.

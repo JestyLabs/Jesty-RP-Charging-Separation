@@ -714,6 +714,7 @@ public final class MainActivity extends Activity {
         out.append("Android: ").append(Build.VERSION.RELEASE)
                 .append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
         out.append("Background restricted: ").append(backgroundRestricted()).append('\n');
+        appendProcessProtection(out);
         boolean auto = BypassService.autoLimitMode(prefs);
         out.append("Bypass on: ").append(prefs.getBoolean("desired_enabled", false))
                 .append(", start on boot: ").append(prefs.getBoolean("auto_on_boot", false))
@@ -740,6 +741,11 @@ public final class MainActivity extends Activity {
         if (recent.isEmpty()) out.append("(none)\n");
         for (String line : recent) out.append(line).append('\n');
         return out.toString();
+    }
+
+    private void appendProcessProtection(StringBuilder out) {
+        RetroidProcessProtection.inspect(RootBridge::exec, getPackageName())
+                .appendDiagnostics(out);
     }
 
     private void appendProcessExits(StringBuilder out) {
