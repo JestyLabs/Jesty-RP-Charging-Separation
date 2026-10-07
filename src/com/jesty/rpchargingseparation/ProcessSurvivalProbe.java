@@ -48,16 +48,22 @@ public final class ProcessSurvivalProbe {
         long deadline = startedElapsed + durationSeconds * 1000L;
         long previousElapsed = startedElapsed;
 
-        append("START probe_version=1"
+        LinuxProcessIdentity process = processIdentity();
+
+        append("START probe_version=2"
                 + " pid=" + Process.myPid()
                 + " uid=" + Process.myUid()
                 + " duration_s=" + durationSeconds
                 + " wall_ms=" + startedWall
-                + " elapsed_ms=" + startedElapsed);
+                + " elapsed_ms=" + startedElapsed
+                + " boot_id=" + compact(readFirstLine("/proc/sys/kernel/random/boot_id"), 80));
         append("IDENTITY selinux=" + compact(readFirstLine("/proc/self/attr/current"), 160)
                 + " oom_score_adj=" + compact(readFirstLine("/proc/self/oom_score_adj"), 32)
                 + " classpath=" + compact(System.getenv("CLASSPATH"), 320));
-        append("PROCESS " + processIdentity());
+        append("PROCESS ppid=" + field(process, 0)
+                + " pgrp=" + field(process, 1)
+                + " session=" + field(process, 2)
+                + " start_ticks=" + field(process, 3));
         append("CGROUP " + compact(readText("/proc/self/cgroup", 1024), 700));
 
         int sequence = 0;
@@ -84,6 +90,25 @@ public final class ProcessSurvivalProbe {
 
         append("END reason=lease_expired seq=" + sequence
                 + " elapsed_ms=" + SystemClock.elapsedRealtime());
+    }
+
+    private static LinuxProcessIdentity processIdentity() {
+        try {
+            return LinuxProcessIdentity.parse(readFirstLine("/proc/self/stat"));
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static String field(LinuxProcessIdentity identity, int which) {
+        if (identity == null) return "?";
+        switch (which) {
+            case 0: return Integer.toString(identity.ppid);
+            case 1: return Integer.toString(identity.processGroup);
+            case 2: return Integer.toString(identity.session);
+            case 3: return Long.toString(identity.startTimeTicks);
+            default: return "?";
+        }
     }
 
     private static int parseDuration(String[] args) {
@@ -113,16 +138,6 @@ public final class ProcessSurvivalProbe {
         } catch (Throwable ignored) {
             // The probe must never start changing system state in response to log failure.
         }
-    }
-
-    /** Linux stat fields after comm: state, ppid, pgrp, session. */
-    private static String processIdentity() {
-        String stat = readFirstLine("/proc/self/stat");
-        int close = stat.lastIndexOf(')');
-        if (close < 0 || close + 2 >= stat.length()) return "ppid=? pgrp=? session=?";
-        String[] fields = stat.substring(close + 2).trim().split("\\s+");
-        if (fields.length < 4) return "ppid=? pgrp=? session=?";
-        return "ppid=" + fields[1] + " pgrp=" + fields[2] + " session=" + fields[3];
     }
 
     private static String readFirstLine(String path) {
