@@ -6,11 +6,23 @@ public final class RestoreWatchdogSentinelScriptTest {
         if (!value) throw new AssertionError(message);
     }
 
+    private static void pserverLaunchIsOperatorFree() {
+        String command = RestoreWatchdogSentinelScript.launchCommand();
+        check(command.equals("sh " + RestoreWatchdogSentinelScript.SCRIPT_PATH),
+                "PServer launch must only execute fixed script");
+        check(!command.contains("&"), "no inline background operator");
+        check(!command.contains(">"), "no inline redirect");
+        check(!command.contains("setsid"), "no setsid");
+        passed++;
+    }
+
     private static void scriptIsResearchOnly() {
         String script = RestoreWatchdogSentinelScript.build(123, 456789L, 30);
         check(script.contains("PID=123"), "pid pinned");
         check(script.contains("START=456789"), "starttime pinned");
         check(script.contains("CUR=${20}"), "field 22 must use positional parameter 20");
+        check(script.contains("nohup sh \"$0\" worker"), "script self-detaches worker");
+        check(script.contains("kill -0 \"$P\""), "launcher verifies worker survived grace");
         check(script.contains("RESTORE_REQUIRED owner_missing"), "owner death marker");
         check(script.contains("RESTORE_REQUIRED owner_mismatch"), "pid reuse marker");
         check(script.contains("RESTORE_REQUIRED lease_expired"), "lease marker");
@@ -43,6 +55,7 @@ public final class RestoreWatchdogSentinelScriptTest {
     }
 
     public static void main(String[] args) {
+        pserverLaunchIsOperatorFree();
         scriptIsResearchOnly();
         leaseIsClamped();
         invalidIdentityFailsClosed();
