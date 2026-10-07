@@ -161,7 +161,8 @@ Free and open source. No features locked behind donations.
 [Live results](docs/LIVE-RESULTS.md) · 
 [Benchmarks](docs/BENCHMARKS.md) · 
 [Release integrity](docs/RELEASE-INTEGRITY.md) · 
-[Research provenance](PROVENANCE.md)
+[Research provenance](PROVENANCE.md) · 
+[Project notice](NOTICE.md)
 
 <details>
 <summary><strong>Technical implementation</strong></summary>
