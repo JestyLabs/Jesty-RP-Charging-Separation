@@ -3,12 +3,9 @@ package com.jesty.rpchargingseparation;
 /**
  * adb/app_process entry point for the research survival probe.
  *
- * Example:
- *   CLASSPATH=<installed APK> app_process / \
- *     com.jesty.rpchargingseparation.ProcessSurvivalProbeTool start 600
- *
- * The tool reaches PServerBinder through the app's existing RootBridge contract.
- * It is intentionally not wired into the Android UI or manifest.
+ * The normal actions reach PServerBinder through the app's existing RootBridge contract.
+ * "print-launcher" is intentionally local-only: the adb harness uses it to materialize
+ * the exact launch script before asking PServer to run that script as root.
  */
 public final class ProcessSurvivalProbeTool {
     private ProcessSurvivalProbeTool() {}
@@ -16,21 +13,17 @@ public final class ProcessSurvivalProbeTool {
     public static void main(String[] args) {
         String action = args == null || args.length == 0 ? "status" : args[0];
         try {
+            if ("print-launcher".equals(action)) {
+                int duration = parseDuration(args, 1);
+                System.out.print(ProcessSurvivalProbeCommand.launcherScript(duration));
+                return;
+            }
+
             switch (action) {
                 case "start":
-                    int duration = ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
-                    if (args.length > 1) {
-                        try {
-                            duration = Integer.parseInt(args[1]);
-                        } catch (NumberFormatException ignored) {
-                            duration = ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
-                        }
-                    }
-                    String command = ProcessSurvivalProbeCommand.launch(duration);
+                    String command = ProcessSurvivalProbeCommand.launchCommand();
                     RootBridge.exec(command);
-                    System.out.println("submitted duration_s="
-                            + ProcessSurvivalProbeCommand.clampDurationSeconds(duration)
-                            + " command_chars=" + command.length());
+                    System.out.println("submitted command_chars=" + command.length());
                     return;
                 case "status":
                     String status = RootBridge.exec(ProcessSurvivalProbeCommand.status());
@@ -46,13 +39,24 @@ public final class ProcessSurvivalProbeTool {
                     System.out.println("probe files removed");
                     return;
                 default:
-                    System.err.println("usage: start [60..1800] | status | stop | clean");
+                    System.err.println("usage: print-launcher [60..1800] | start | status | stop | clean");
                     System.exit(2);
             }
         } catch (Throwable error) {
             System.err.println("probe tool failed: " + error.getClass().getSimpleName()
                     + ": " + error.getMessage());
             System.exit(1);
+        }
+    }
+
+    private static int parseDuration(String[] args, int index) {
+        if (args == null || args.length <= index) {
+            return ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
+        }
+        try {
+            return ProcessSurvivalProbeCommand.clampDurationSeconds(Integer.parseInt(args[index]));
+        } catch (NumberFormatException ignored) {
+            return ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
         }
     }
 }
