@@ -47,13 +47,16 @@ public final class ProcessSurvivalProbeTool {
                     print(RootBridge.exec(RestoreWatchdogSentinelScript.statusCommand()),
                             "sentinel pending");
                     return;
+                case "sentinel-stop":
+                    submit(RestoreWatchdogSentinelScript.stopCommand(), "sentinel stop marker");
+                    return;
                 case "sentinel-clean":
                     submit(RestoreWatchdogSentinelScript.cleanCommand(), "sentinel cleanup");
                     return;
                 default:
                     System.err.println("usage: print-launcher [60..1800] | start | status | "
                             + "stop | clean | print-sentinel <pid> <start_ticks> <lease_s> | "
-                            + "sentinel-start | sentinel-status | sentinel-clean");
+                            + "sentinel-start | sentinel-status | sentinel-stop | sentinel-clean");
                     System.exit(2);
             }
         } catch (Throwable error) {
