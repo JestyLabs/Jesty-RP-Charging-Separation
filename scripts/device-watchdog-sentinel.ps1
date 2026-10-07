@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Start', 'Status', 'Clean')]
+    [ValidateSet('Start', 'Status', 'Stop', 'Clean')]
     [string]$Action = 'Status',
     [int]$LeaseSeconds = 30
 )
@@ -74,5 +74,6 @@ switch ($Action) {
         }
     }
     'Status' { Invoke-ProbeTool 'sentinel-status' }
+    'Stop'   { Invoke-ProbeTool 'sentinel-stop' }
     'Clean'  { Invoke-ProbeTool 'sentinel-clean' }
 }
