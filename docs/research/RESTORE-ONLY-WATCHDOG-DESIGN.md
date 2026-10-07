@@ -142,3 +142,33 @@ Before any charging write is added to a watchdog:
 4. restore-only ordering must be exercised against a harmless sentinel first;
 5. package update and Force Stop behavior must be tested;
 6. only then may a charging restore prototype be considered.
+
+
+## Host validation completed
+
+The harmless sentinel version was exercised on a Linux host with a disposable owner
+process. This is **HOST-PROVEN, DEVICE-UNTESTED** evidence only.
+
+Observed sequence:
+
+```text
+owner alive  -> sentinel did not fire
+owner killed -> RESTORE_REQUIRED owner_missing
+```
+
+The same run also executed the research host tests:
+
+```text
+Process survival probe command tests passed: 3
+Restore-only watchdog policy tests passed: 5
+Linux process identity tests passed: 4
+Restore watchdog sentinel script tests passed: 3
+```
+
+During this work a shell bug was caught before device use: positional field 20 must be
+addressed as `${20}`, not `$20`, otherwise POSIX shell can parse it as `$2` followed
+by `0`. The test now pins the correct syntax.
+
+This host result proves only the ownership/sentinel logic under a normal Linux shell. It
+does not prove Android toybox behavior, PServer launch behavior, Retroid cgroups, or
+screen-off scheduling.
