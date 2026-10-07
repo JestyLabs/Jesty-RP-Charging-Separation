@@ -3,7 +3,12 @@ param()
 
 # Runs every JDK-only test. No device, root access or Android SDK is required.
 $ErrorActionPreference = 'Stop'
-foreach ($script in @('test-charge-limit.ps1', 'test-update-version.ps1', 'test-bypass-controller.ps1')) {
+foreach ($script in @(
+    'test-charge-limit.ps1',
+    'test-update-version.ps1',
+    'test-bypass-controller.ps1',
+    'test-process-survival-probe.ps1'
+)) {
     Write-Host "== $script"
     & (Join-Path $PSScriptRoot $script)
 }
