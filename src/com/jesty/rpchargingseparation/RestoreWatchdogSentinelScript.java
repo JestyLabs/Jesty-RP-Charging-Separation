@@ -22,7 +22,7 @@ final class RestoreWatchdogSentinelScript {
                 + "  S=$(cat /proc/$PID/stat 2>/dev/null) || { echo 'RESTORE_REQUIRED owner_missing' > \"$OUT\"; exit 0; }\n"
                 + "  R=${S##*) }\n"
                 + "  set -- $R\n"
-                + "  CUR=$20\n"
+                + "  CUR=${20}\n"
                 + "  [ \"$CUR\" = \"$START\" ] || { echo 'RESTORE_REQUIRED owner_mismatch' > \"$OUT\"; exit 0; }\n"
                 + "  sleep 1\n"
                 + "done\n"
