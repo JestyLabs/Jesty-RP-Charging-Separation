@@ -114,6 +114,41 @@ maintainer Flip 2 .130 and reporter Flip 2 .311 before adding any write path.
 A read failure or missing `app_whiteList` remains **unknown**, not
 "unsupported" or "unprotected".
 
+For an APK-independent proof, the branch also includes a read-only ADB capture
+harness. It never writes Settings or charging controls:
+
+```powershell
+.\scripts\capture-retroid-process-protection.ps1 -Label whitelist-off-1
+# Add only Jesty RP Charging Separation in Retroid -> Whitelist Application.
+.\scripts\capture-retroid-process-protection.ps1 -Label whitelist-on
+# Remove it again.
+.\scripts\capture-retroid-process-protection.ps1 -Label whitelist-off-2
+```
+
+It records only model/build metadata plus `settings list system/global/secure`,
+the direct `app_whiteList` candidate read and the current device-idle whitelist.
+The capture folder is append-only by label so a later run cannot silently replace
+earlier evidence.
+
+Compare adjacent captures:
+
+```powershell
+.\scripts\compare-retroid-process-protection.ps1 `
+  -Before .\build\retroid-process-protection\whitelist-off-1 `
+  -After  .\build\retroid-process-protection\whitelist-on
+
+.\scripts\compare-retroid-process-protection.ps1 `
+  -Before .\build\retroid-process-protection\whitelist-on `
+  -After  .\build\retroid-process-protection\whitelist-off-2
+```
+
+A credible backend mapping must change in the expected direction on the first
+transition and reverse on the second. A one-way difference is insufficient
+because unrelated firmware state can change between samples.
+
+Repeat with new labels for **Clean process when standby -> Ignored packages**,
+again changing only that one Retroid control.
+
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
 - [ ] Battery current settles within the confirmation threshold.
