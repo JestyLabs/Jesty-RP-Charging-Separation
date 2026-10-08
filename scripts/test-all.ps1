@@ -9,7 +9,8 @@ foreach ($script in @(
     'test-process-protection.ps1',
     'test-process-protection-capture.ps1',
     'test-process-survival-probe.ps1',
-    'test-process-resilience-safety.ps1'
+    'test-process-resilience-safety.ps1',
+    'test-research-device-target.ps1'
 )) {
     Write-Host "== $script"
     & (Join-Path $PSScriptRoot $script)

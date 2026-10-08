@@ -101,17 +101,9 @@ native separation is still active resolves to `RESTORE_NORMAL_THEN_EXIT`, not `E
 
 There is intentionally no action that enables separation.
 
-## Unplugged ARMED nuance
+## Corrected unplug path and abrupt owner loss
 
-Today the controller may transition from ACTIVE to ARMED after USB removal while the
-native limit remains non-zero. That lets a later replug reattach cleanly.
-
-Therefore a future watchdog cannot simply be tied to the in-memory `ACTIVE` enum. It
-must protect the period in which a non-zero native separation request may persist,
-including an unplugged/armed interval.
-
-If the app dies while unplugged, restoring the native limit to `0` is conservative and
-prevents an unmonitored separation from reappearing on the next plug.
+PR #11 restores and confirms normal charging before entering ARMED on unplug. The historical nonzero ARMED window is no longer the baseline. A future watchdog must instead address verified loss of ownership of an active native request, without assuming callbacks execute after abrupt death.
 
 ## Restore failure
 
@@ -163,7 +155,7 @@ Before any charging write is added to a watchdog:
 ## Host validation completed
 
 The harmless sentinel version was exercised on a Linux host with a disposable owner
-process. This is **HOST-PROVEN, DEVICE-UNTESTED** evidence only.
+process. This paragraph describes host evidence only; the later bounded Flip 2 owner-loss sentinel observation is recorded in PServer-PROCESS-RESILIENCE.md. It did not perform charging restoration.
 
 Observed host sequences:
 
@@ -201,8 +193,8 @@ After the basic detached survival probe has proven that PServer can keep a helpe
 the branch contains a second device harness that still has **zero charging authority**:
 
 ```powershell
-.\scripts\device-watchdog-sentinel.ps1 -Action Start -LeaseSeconds 30
-.\scripts\device-watchdog-sentinel.ps1 -Action Status
+.\scripts\device-watchdog-sentinel.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Start -LeaseSeconds 30
+.\scripts\device-watchdog-sentinel.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Status
 ```
 
 It captures the currently running app's exact PID + `/proc/PID/stat` starttime, stages
@@ -228,10 +220,14 @@ decided.
 Clean termination:
 
 ```powershell
-.\scripts\device-watchdog-sentinel.ps1 -Action Stop
-.\scripts\device-watchdog-sentinel.ps1 -Action Status
-.\scripts\device-watchdog-sentinel.ps1 -Action Clean
+.\scripts\device-watchdog-sentinel.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Stop
+.\scripts\device-watchdog-sentinel.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Status
+.\scripts\device-watchdog-sentinel.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Clean
 ```
 
 Do not run this before the simpler survival probe has established the PServer launch
 behavior on the device.
+
+## Lease boundary
+
+The current harmless sentinel has a fixed bounded lease and no renewal API. Expiry emits a research marker and exits; it cannot restore charging. This is intentionally different from a future production helper. Before any production prototype, separately specify authenticated renewal, monotonic expiry, exact boot/PID/starttime ownership and restore/readback behavior. The host retry model does not establish physical recovery safety.

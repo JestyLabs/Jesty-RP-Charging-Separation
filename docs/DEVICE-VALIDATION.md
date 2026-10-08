@@ -92,7 +92,7 @@ key or storage format backs either Retroid UI.
 The diagnostic branch intentionally does not change process-protection state.
 **COPY DIAGNOSTICS** performs one privileged read, `settings list system`,
 through the already-used `PServerBinder`, then filters the result locally.
-`app_whiteList` began as an OdinTools-derived candidate. The local Flip 2
+`app_whiteList` was investigated through local before/after captures. The local Flip 2
 `.130` before/after result below proves its link to this Retroid UI on that
 firmware; the `.311` storage mapping remains untested.
 

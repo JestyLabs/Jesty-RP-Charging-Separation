@@ -1,5 +1,8 @@
 [CmdletBinding()]
 param(
+    [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9._:-]+$')][string]$Serial,
+    [Parameter(Mandatory=$true)][ValidatePattern('^/data/local/tmp/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*/)*[A-Za-z0-9_-][A-Za-z0-9._-]*\.apk$')][string]$ResearchApk,
+    [string]$AdbPath = 'adb.exe',
     [ValidateSet('Start', 'Status', 'Stop', 'Clean')]
     [string]$Action = 'Status',
     [int]$LeaseSeconds = 30
@@ -10,34 +13,32 @@ $package = 'com.jesty.rpchargingseparation'
 $toolClass = 'com.jesty.rpchargingseparation.ProcessSurvivalProbeTool'
 $remoteScript = '/data/local/tmp/jesty-rp-watchdog-sentinel.sh'
 
-$adb = Get-Command adb.exe -ErrorAction SilentlyContinue
-if (-not $adb) { throw 'adb.exe was not found in PATH.' }
-$state = (& $adb.Source get-state 2>$null | Select-Object -First 1)
-if (($state | ForEach-Object { $_.Trim() }) -ne 'device') {
-    throw 'No authorized Android device is connected through adb.'
-}
-
-$apkLine = (& $adb.Source shell pm path $package | Select-Object -First 1)
-if (-not $apkLine) { throw "Package $package is not installed." }
-$apkLine = $apkLine.Trim()
-if (-not $apkLine.StartsWith('package:')) { throw "Unexpected pm path output: $apkLine" }
-$apkPath = $apkLine.Substring('package:'.Length)
+Get-Command $AdbPath -ErrorAction Stop | Out-Null
+$state = (& $AdbPath -s $Serial get-state 2>$null | Select-Object -First 1)
+if ($LASTEXITCODE -ne 0 -or "$state".Trim() -ne 'device') { throw 'Selected device is not ready.' }
+$model = (& $AdbPath -s $Serial shell getprop ro.product.model) -join ' '
+if ($LASTEXITCODE -ne 0 -or $model -notmatch '(?i)flip\s*2') { throw 'Selected device is not a Flip 2.' }
+$apkPath = $ResearchApk
+& $AdbPath -s $Serial shell "test -r '$apkPath'"
+if ($LASTEXITCODE -ne 0) { throw 'Stage the research APK separately; do not replace the stable app.' }
 
 function Invoke-ProbeTool([string]$Arguments) {
     $remote = "CLASSPATH='$apkPath' app_process / $toolClass $Arguments"
-    & $adb.Source shell $remote
+    & $AdbPath -s $Serial shell $remote
     if ($LASTEXITCODE -ne 0) {
         throw "Device sentinel action failed with exit code $LASTEXITCODE."
     }
 }
 
 function Get-OwnerIdentity {
-    $pids = @((& $adb.Source shell pidof $package) -split '\s+' | Where-Object { $_ -match '^\d+$' })
+    $pids = @((& $AdbPath -s $Serial shell pidof $package) -split '\s+' | Where-Object { $_ -match '^\d+$' })
+    if ($LASTEXITCODE -ne 0) { throw 'Owner process lookup unavailable.' }
     if ($pids.Count -ne 1) {
         throw "Expected exactly one running $package process; found: $($pids -join ', ')"
     }
     $pidValue = [int]$pids[0]
-    $stat = ((& $adb.Source shell cat "/proc/$pidValue/stat") -join ' ').Trim()
+    $stat = ((& $AdbPath -s $Serial shell cat "/proc/$pidValue/stat") -join ' ').Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Owner starttime read unavailable.' }
     $close = $stat.LastIndexOf(')')
     if ($close -lt 0 -or $close + 2 -ge $stat.Length) { throw 'Could not parse owner /proc stat.' }
     $fields = $stat.Substring($close + 2).Trim() -split '\s+'
@@ -57,15 +58,15 @@ switch ($Action) {
 
         $temp = Join-Path ([System.IO.Path]::GetTempPath()) 'jesty-rp-watchdog-sentinel.sh'
         try {
-            $scriptLines = & $adb.Source shell "CLASSPATH='$apkPath' app_process / $toolClass print-sentinel $($identity.Pid) $($identity.StartTicks) $lease"
+            $scriptLines = & $AdbPath -s $Serial shell "CLASSPATH='$apkPath' app_process / $toolClass print-sentinel $($identity.Pid) $($identity.StartTicks) $lease"
             if ($LASTEXITCODE -ne 0 -or -not $scriptLines) {
                 throw 'Could not generate sentinel script.'
             }
             [System.IO.File]::WriteAllText($temp, (($scriptLines -join "`n") + "`n"),
                     (New-Object System.Text.UTF8Encoding($false)))
-            & $adb.Source push $temp $remoteScript | Out-Host
+            & $AdbPath -s $Serial push $temp $remoteScript | Out-Host
             if ($LASTEXITCODE -ne 0) { throw 'Could not stage sentinel script.' }
-            & $adb.Source shell chmod 700 $remoteScript
+            & $AdbPath -s $Serial shell chmod 700 $remoteScript
             if ($LASTEXITCODE -ne 0) { throw 'Could not chmod sentinel script.' }
             Invoke-ProbeTool 'sentinel-start'
             Write-Host 'Sentinel armed. It has no charging-control command.'

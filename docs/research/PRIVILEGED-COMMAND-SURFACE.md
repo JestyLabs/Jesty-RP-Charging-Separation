@@ -94,8 +94,8 @@ The policy/controller should depend on typed operations, not command strings.
 `RootBridge` itself is not process-wide synchronized, so diagnostics or other callers
 could overlap a service transaction.
 
-External PServer research reports empty or unreliable replies under overlapping
-transactions on some firmware.
+Concurrent callers are a design consideration; no project failure has established
+that overlapping transactions caused an incident.
 
 No current Charging Separation bug is attributed to this, so do not change the release
 bridge as part of PR #5 or PR #9. A future transport refactor should use one process-wide

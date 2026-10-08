@@ -164,10 +164,10 @@ Reconsider a privileged ChargingDaemon only if at least one of these is proven:
 
 Even then, reuse `BypassController`; do not fork the policy logic.
 
-## Next physical gates
+## Evidence and next gates
 
-1. Prove the exact Retroid Whitelist Application backing store with OFF -> ON -> OFF.
-2. Run the detached PServer process-survival probe with charging separation OFF.
-3. If it survives the relevant cleaner, measure screen-off scheduling gaps.
-4. Only then prototype a restore-only watchdog.
-5. Only after watchdog proof consider automatic process-protection enrollment.
+PR #5 established the local whitelist backing store with a read-only before/after comparison. The original reporter also demonstrated the vendor workaround on the reported firmware. This does not establish helper survival.
+
+PR #11 corrected ACTIVE -> unplug by restoring normal charging before ARMED; do not treat the old unplug window as current behavior. Abrupt owner death while ACTIVE remains a separate research question.
+
+Follow RETROID-RESEARCH-VALIDATION-MATRIX.md for Clear All, standby cleaner, USB-free sleep, identity, update and sentinel cleanup. Preserve the Android controller as policy owner. Only after relevant evidence should a separate restore-only prototype be considered; no production helper is implemented here.

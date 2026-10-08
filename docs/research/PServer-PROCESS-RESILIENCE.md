@@ -48,17 +48,6 @@ code from the installed APK.
 That proves the mechanism is viable on the related vendor bridge. It does not prove
 Flip 2 cleaner behavior.
 
-### External implementation evidence
-
-Public AYN/Retroid projects show long-lived PServer-launched helpers are a real pattern.
-GameNative uses a detached root babysitter for crash recovery.
-
-External implementations disagree on launcher details. One Thor-side reverse-engineering
-effort reports that `setsid app_process` can fail and that inline `&`/redirection can be
-unreliable through pservice.
-
-Those observations are useful design input, not Retroid proof.
-
 ### UNTESTED on our Retroid hardware
 
 - survival on reporter Flip 2 12 GB `.311`;
@@ -97,7 +86,7 @@ root-owned log into one line before decoding it in Java. PowerShell must stage
 Android shell scripts with LF line endings; CRLF prevented the first sentinel
 launcher from running. The corrected status reader and an LF-staged sentinel
 were retested on-device. The PowerShell harnesses now write LF scripts but
-still need an end-to-end run using an installed research APK.
+now require an explicitly staged research APK under /data/local/tmp and an explicit confirmed Flip 2 serial; they must not replace the stable app. The revised harness is host-tested; a fresh physical run remains pending.
 
 ## Research probe
 
@@ -166,7 +155,7 @@ owner alive  -> no restore marker
 owner killed -> RESTORE_REQUIRED owner_missing
 ```
 
-Classification: **HOST-PROVEN, DEVICE-UNTESTED**.
+Classification of this host run: **HOST-PROVEN**. Later bounded device observations are recorded separately above; they do not prove the revised harness or all lifecycle cases.
 
 ## Physical lifecycle protocol
 
@@ -174,22 +163,22 @@ Keep charging separation **OFF** for the whole survival test.
 
 ### Preconditions
 
-- remove Jesty RP Charging Separation from Retroid Whitelist Application;
-- remove it from Clean process when standby -> Ignored packages;
-- connect authorized ADB;
-- install a research APK from this branch.
+- confirm separation OFF and native limit 0 with the owner;
+- record existing vendor protection settings; preserve them unless a separately approved single-variable experiment changes one;
+- confirm the intended Flip 2 serial and set $Serial locally;
+- stage a research APK under /data/local/tmp, set $ResearchApk to that device path, and leave the stable installation untouched. The tools reject a different model or unavailable research APK.
 
 ### Start clean
 
 ```powershell
-.\scripts\device-process-survival-probe.ps1 -Action Clean
-.\scripts\device-process-survival-probe.ps1 -Action Start -DurationSeconds 600
+.\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Clean
+.\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Start -DurationSeconds 600
 ```
 
 Then:
 
 ```powershell
-.\scripts\device-process-survival-probe.ps1 -Action Status
+.\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Status
 ```
 
 Required before continuing:
@@ -210,7 +199,7 @@ Capture status before and after each action:
 2. swipe only the app from Recents;
 3. Retroid Clear All;
 4. standby cleaner;
-5. Android Force Stop last.
+5. Android Force Stop only in a separately authorized supervised session.
 
 **PROVEN SURVIVAL** requires the same PID/starttime identity and a continuing heartbeat
 sequence with no new START line.
@@ -221,8 +210,8 @@ important.
 ### Stop
 
 ```powershell
-.\scripts\device-process-survival-probe.ps1 -Action Stop
-.\scripts\device-process-survival-probe.ps1 -Action Status
+.\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Stop
+.\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Status
 ```
 
 Expected final event:

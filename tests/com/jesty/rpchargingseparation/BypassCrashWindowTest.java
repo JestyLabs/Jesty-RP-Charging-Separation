@@ -76,7 +76,7 @@ public final class BypassCrashWindowTest {
         return controller;
     }
 
-    private static void activeUnplugTransitionsToArmedWithoutRestore() {
+    private static void activeUnplugRestoresBeforeArmed() {
         Device device = new Device();
         Settings settings = new Settings();
         Platform platform = new Platform();
@@ -87,13 +87,14 @@ public final class BypassCrashWindowTest {
         controller.tick("unplug");
 
         check(controller.state() == BypassController.State.ARMED, "unplug must arm");
-        check(device.limit == LIMIT_MAX,
-                "current ACTIVE -> ARMED path intentionally leaves native limit non-zero");
-        check(device.writes == writesBefore, "unplug path performs no restore write");
+        check(device.limit == 0, "unplug restores normal charging before ARMED");
+        check(!settings.requested, "unplug clears native requested marker");
+        check(settings.desired, "unplug preserves user intent");
+        check(device.writes > writesBefore, "unplug performs restore write");
         passed++;
     }
 
-    private static void destroyFromArmedDoesNotRestoreToday() {
+    private static void destroyFromArmedKeepsVerifiedNormal() {
         Device device = new Device();
         Settings settings = new Settings();
         Platform platform = new Platform();
@@ -106,8 +107,8 @@ public final class BypassCrashWindowTest {
 
         check(controller.state() == BypassController.State.ARMED,
                 "current destroy() leaves ARMED state unchanged");
-        check(device.limit == LIMIT_MAX,
-                "current destroy() does not restore an ARMED non-zero native limit");
+        check(device.limit == 0, "ARMED teardown retains restored normal charging");
+        check(!settings.requested, "ARMED teardown retains cleared request");
         check(device.writes == writesBeforeDestroy,
                 "destroy from ARMED performs no hardware write");
         passed++;
@@ -119,9 +120,9 @@ public final class BypassCrashWindowTest {
         Platform firstPlatform = new Platform();
         BypassController first = active(device, settings, firstPlatform);
 
-        device.usb = false;
-        first.tick("unplug");
+        // Owner disappears while still ACTIVE; no unplug tick or teardown runs.
         check(device.limit == LIMIT_MAX, "precondition: non-zero limit persists");
+        device.usb = false;
 
         // Abrupt process death: do not call destroy(). A new process/controller starts later.
         Platform restartedPlatform = new Platform();
@@ -153,8 +154,8 @@ public final class BypassCrashWindowTest {
     }
 
     public static void main(String[] args) {
-        activeUnplugTransitionsToArmedWithoutRestore();
-        destroyFromArmedDoesNotRestoreToday();
+        activeUnplugRestoresBeforeArmed();
+        destroyFromArmedKeepsVerifiedNormal();
         stickyRestartWhileUnpluggedRepairsThePersistedLimit();
         explicitOffFromArmedRestores();
         System.out.println("Bypass crash-window characterization tests passed: " + passed);
