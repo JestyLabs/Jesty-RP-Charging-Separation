@@ -3,7 +3,7 @@
 
 # Research workflow
 
-This project keeps reverse-engineering and device-behavior claims traceable without turning the repository into an attribution dispute.
+This project keeps reverse-engineering and device-behavior claims traceable through our code, tests and recorded observations.
 
 ## Before publishing a substantial new finding
 
@@ -13,7 +13,7 @@ For non-trivial reverse engineering, vendor-behavior discoveries, or implementat
 2. Give the record a stable, dated research ID.
 3. Classify the claim as **PROVEN**, **OBSERVED**, **HYPOTHESIS**, or **UNTESTED**.
 4. Link the exact commit/PR/issue, device build, test artifact hash, or other evidence that supports it.
-5. Record material external prior art with an upstream project and exact commit/URL where practical.
+5. Keep private study notes and raw evidence local; public summaries describe our implementation and conclusions. Preserve legally required attribution.
 6. Keep implementation provenance tied to the exact physically tested candidate when later refactors or consolidation change the final code shape.
 
 ## Source-of-truth order
@@ -38,13 +38,9 @@ For settings, files, hooks, whitelists, or other state not exclusively owned by 
 - record whether the app created/added the state when that matters for safe cleanup;
 - never infer ownership from a matching filename, package fragment, PID, port, or setting substring alone.
 
-## Attribution and comparisons
+## Public documentation
 
-Generic Android/vendor mechanisms and public prior art are not claimed as project inventions.
-
-If another project appears to implement a similar idea, compare objective evidence first: public timestamps, commits, code structure, unusual implementation details, identical mistakes, copied text, and license/notice handling. Similar functionality alone is not evidence of copying.
-
-Do not add fake bugs, misleading code paths, poisoned examples, or traps. Provenance should come from legitimate technical records that remain useful even if no dispute ever occurs.
+Concentrate on our architecture, investigation, implementation, tests and results. Do not name projects studied privately, publish comparisons or add defensive statements. Keep license obligations intact. Implementations must be verifiable and supported by evidence.
 
 ## Release discipline
 

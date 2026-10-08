@@ -3,28 +3,17 @@
 
 # Research provenance
 
-This file keeps technical provenance for Jesty RP Charging Separation explicit without claiming ownership of generic Android, Retroid or AYN platform mechanisms.
+This file keeps technical provenance for Jesty RP Charging Separation explicit with links to our implementation and validation evidence.
 
 See [docs/RESEARCH-WORKFLOW.md](docs/RESEARCH-WORKFLOW.md) for the standing workflow used before publishing substantial new reverse-engineering or cross-project findings.
 
-## Scope and attribution rule
+## Project evidence and publication
 
-When project work materially depends on external code, research or prior art, record the upstream source and an exact URL or commit where practical. When a claim comes from this project, preserve the commit, issue/PR, device build and test evidence that established it.
+Keep research records tied to our exact commits, tests and observed outcomes. Public material focuses on our architecture, implementation and results. Detailed analysis and device/session captures remain local. Preserve legally required licenses and attribution.
 
-Downstream use remains governed by GPL-3.0. The project asks that non-trivial research and implementation provenance be preserved when reused.
+## Platform boundary
 
-## Public prior art and platform mechanisms
-
-The vendor `PServerBinder` bridge predates this project. Jesty RP Charging Separation has used it since the initial public release to access Retroid's privileged charging controls.
-
-OdinTools is an important public reference for adjacent vendor behavior:
-
-- repository: https://github.com/langerhans/OdinTools
-- reference commit: `0eaf49392e263bf1de4d6c7eb37aeb03dadb0ccc`
-- `ShellExecutor.kt` uses `PServerBinder`
-- `SettingsRepo.kt` manages an AYN vendor whitelist through the system setting `app_whiteList`
-
-That is prior art for the vendor bridge and AYN whitelist behavior. It is **not** proof that Retroid's current Whitelist Application UI uses the same setting.
+The app uses the vendor PServerBinder bridge to access privileged charging controls. Bridge availability and process-protection policy remain firmware-specific; no generic ownership claim or cross-device guarantee is implied.
 
 ## Project research records
 
@@ -69,15 +58,18 @@ Diagnostic follow-up: [PR #5](https://github.com/JestyLabs/Jesty-RP-Charging-Sep
 
 ### JRPCS-RR-20261007-RETROID-WHITELIST
 
-Current research question:
+PR #5 records local whitelist backing-store discovery and read-only comparison. Reporter tests in issue #2 showed each tested vendor protection could preserve the threshold transition; whitelist also preserved the notification. Those results do not demonstrate privileged helper survival.
 
-Can the app read and, later, safely configure Retroid's own process whitelist through the same `PServerBinder` transport it already uses?
+### JRPCS-RR-20261007-PSERVER-PROCESS-RESILIENCE
 
-Current status:
-- **PROVEN:** the `.311` failure is avoided when either tested Retroid process protection is enabled.
-- **PROVEN:** OdinTools uses `app_whiteList` on AYN through the same vendor bridge family.
-- **UNTESTED:** Retroid Whitelist Application uses that exact key/format.
-- **PLAN:** read-only discovery first; no release or charging-behavior change until the Retroid backend is proven.
+PR #9 investigates bounded helper survival without charging authority. The Android controller remains the charging-policy owner.
+
+- HOST-TESTED: exact PID/starttime parsing, restore-only policy decisions, bounded commands, sentinel generation and retry policy.
+- OBSERVED ON LOCAL DEVICE: individual Recents removal and about two minutes screen-off with USB/ADB attached preserved the probe; the harmless sentinel detected owner loss. No charging restoration was performed.
+- HISTORICAL: the ACTIVE -> unplug nonzero ARMED window was fixed by PR #11. Updated tests assert restore before ARMED; abrupt ACTIVE owner death remains distinct.
+- PENDING: Clear All, standby cleaner, USB-free deep sleep scheduling, controlled update, exact identity mismatch and cleanup coverage for the revised harness.
+
+The released transport convention remains unchanged. Detailed analysis and raw evidence stay local. See docs/research/RETROID-RESEARCH-VALIDATION-MATRIX.md for the physical research gates.
 
 ## Evidence discipline
 
