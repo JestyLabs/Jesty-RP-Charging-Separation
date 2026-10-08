@@ -92,8 +92,9 @@ key or storage format backs either Retroid UI.
 The diagnostic branch intentionally does not change process-protection state.
 **COPY DIAGNOSTICS** performs one privileged read, `settings list system`,
 through the already-used `PServerBinder`, then filters the result locally.
-`app_whiteList` is reported as an OdinTools-derived candidate only; do not call
-it the Retroid backend until a physical before/after test proves the link.
+`app_whiteList` began as an OdinTools-derived candidate. The local Flip 2
+`.130` before/after result below proves its link to this Retroid UI on that
+firmware; the `.311` storage mapping remains untested.
 
 On each firmware under test, capture these three samples without changing
 charging settings:
@@ -148,6 +149,24 @@ because unrelated firmware state can change between samples.
 
 Repeat with new labels for **Clean process when standby -> Ignored packages**,
 again changing only that one Retroid control.
+
+On the maintainer's Flip 2 `.130` with stable v1.5.9, the read-only
+Whitelist Application OFF -> ON -> OFF capture showed that the UI added the
+exact app package to `Settings.System.app_whiteList` and removed it again.
+`display_app_whiteList` also changed and reverted; do not assume it is an
+independent protection list. The complete first and third captures matched.
+The ignored-packages entry and Android device-idle whitelist did not change.
+
+A separate `.130` Ignored packages test, with the cleaner OFF at both capture
+endpoints, showed the exact app package removed from
+`Settings.System.auto_clean_ignored_packages` and then restored. The captured
+state before and after restoration matched. The Retroid UI required briefly
+enabling the cleaner to edit that list, so intermediate state was not captured;
+no other persistent setting changed between the OFF endpoints. The UI showed
+the delay as **1 minute** when the raw setting was `1`; do not infer seconds
+from that raw value. Charging separation remained OFF and the native limit was
+`0` during these read-only captures. Neither mapping is yet verified on the
+reporter's `.311` firmware.
 
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.
