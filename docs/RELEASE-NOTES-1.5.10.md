@@ -21,3 +21,5 @@ check on a Retroid device.
 
 The APK must be signed with the existing release certificate so it can install
 over earlier versions without clearing app data.
+
+APK SHA-256: `71D7DF7F46356A5CE5F5A3C27AB9D112C2CB369E56BC00A79639F87F790BCED0`

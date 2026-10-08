@@ -1,5 +1,26 @@
 # Release integrity
 
+## 1.5.10 unplug restore and diagnostics
+
+- Source commit: `35504910f97d0c15bfb515283850866fc2dd070b`
+- Package: `com.jesty.rpchargingseparation`
+- Version code: `31`
+- Version name: `1.5.10`
+- APK: `Jesty-RP-Charging-Separation-1.5.10.apk`
+- Signed APK size: `6,079,407` bytes
+- Signed APK SHA-256:
+  `71D7DF7F46356A5CE5F5A3C27AB9D112C2CB369E56BC00A79639F87F790BCED0`
+- Signing certificate SHA-256:
+  `727D4850779BED1E51018108E13BC399D4DA38CFC68F4F7504120AD5E2DAD6FC`
+- Verified signing scheme: APK Signature Scheme v3.
+
+The Java scenarios, unsigned Android build, ZIP alignment, package/version
+inspection, and signature verification passed. The certificate matches the
+published v1.5.9 APK. This exact signed APK installed over v1.5.9 on the
+maintainer's Flip 2 `.130` without clearing data; version code 31 and native
+limit 0 were confirmed afterward. The new unplug transition still requires its
+physical checklist before it can be claimed as hardware-validated.
+
 ## 1.5.8 screen-off automatic threshold monitoring
 
 - Package: `com.jesty.rpchargingseparation`
