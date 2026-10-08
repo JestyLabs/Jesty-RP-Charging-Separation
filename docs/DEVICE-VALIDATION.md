@@ -182,6 +182,22 @@ reporter's `.311` firmware.
 - [ ] Force stop behavior and recovery after opening the app are documented.
 - [ ] The device charges normally after all tests.
 
+### Unplug from active separation (release gate)
+
+- [ ] On a signed test build, plug in and wait for `ACTIVE`, `Not charging`, and
+  `charge_control_limit == charge_control_limit_max`.
+- [ ] Unplug without turning bypass off. Confirm `ARMED`, native limit `0`,
+  and the saved bypass choice still ON before reconnecting USB.
+- [ ] Reconnect and confirm the chosen Right away or automatic threshold mode
+  resumes. Check both modes; in automatic mode, confirm charging below the
+  resume level and separation again at the stop level.
+- [ ] Repeat the unplug step; only after confirming native limit `0`, use
+  Android Force Stop while still unplugged. Reconnect USB and confirm normal
+  charging. Do not expect an automatic restart after Force Stop; reopening the
+  app should reconcile the saved bypass choice.
+- [ ] End with bypass OFF and native limit `0`. Record firmware, charger,
+  battery status, event log, and readback for each transition.
+
 ### v1.5.0 automatic threshold mode
 
 - [ ] Normal charging continues below **Stop charging at** (80% by default).

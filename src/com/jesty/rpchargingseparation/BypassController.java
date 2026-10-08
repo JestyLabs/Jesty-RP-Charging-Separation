@@ -263,8 +263,7 @@ final class BypassController {
 
     private void monitorActive(PowerTelemetry telemetry) throws Exception {
         if (!telemetry.usbPresent) {
-            setWakeLock(false);
-            transition(State.ARMED, NO_USB_DETAIL);
+            arm(telemetry);
             return;
         }
         if (telemetry.limit != telemetry.limitMax) {
@@ -295,6 +294,7 @@ final class BypassController {
 
     private void arm(PowerTelemetry telemetry) throws Exception {
         if (telemetry.limit != 0) restoreAndConfirm();
+        else settings.setRequested(false);
         setWakeLock(false);
         transition(State.ARMED, NO_USB_DETAIL);
     }
