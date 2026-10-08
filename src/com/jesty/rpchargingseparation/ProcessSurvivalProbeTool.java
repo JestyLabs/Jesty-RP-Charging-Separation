@@ -1,5 +1,8 @@
 package com.jesty.rpchargingseparation;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 /**
  * adb/app_process entry point for process-resilience research.
  *
@@ -31,7 +34,7 @@ public final class ProcessSurvivalProbeTool {
                     submit(ProcessSurvivalProbeCommand.launchCommand(), "survival probe");
                     return;
                 case "status":
-                    print(RootBridge.exec(ProcessSurvivalProbeCommand.status()),
+                    print(decodeStatus(RootBridge.exec(ProcessSurvivalProbeCommand.status())),
                             "no probe log");
                     return;
                 case "stop":
@@ -44,7 +47,7 @@ public final class ProcessSurvivalProbeTool {
                     submit(RestoreWatchdogSentinelScript.launchCommand(), "sentinel watchdog");
                     return;
                 case "sentinel-status":
-                    print(RootBridge.exec(RestoreWatchdogSentinelScript.statusCommand()),
+                    print(decodeStatus(RootBridge.exec(RestoreWatchdogSentinelScript.statusCommand())),
                             "sentinel pending");
                     return;
                 case "sentinel-stop":
@@ -73,6 +76,11 @@ public final class ProcessSurvivalProbeTool {
 
     private static void print(String value, String empty) {
         System.out.print(value == null || value.trim().isEmpty() ? empty + "\n" : value);
+    }
+
+    private static String decodeStatus(String encoded) {
+        if (encoded == null || encoded.trim().isEmpty()) return "";
+        return new String(Base64.getDecoder().decode(encoded.trim()), StandardCharsets.UTF_8);
     }
 
     private static int parseInt(String[] args, int index, int fallback) {

@@ -39,6 +39,8 @@ public final class ProcessSurvivalProbeCommandTest {
     }
 
     private static void supportCommandsStayInTempOnly() {
+        check(ProcessSurvivalProbeCommand.status().contains("base64 -w 0"),
+                "multiline status must survive pservice first-line output");
         for (String command : new String[]{
                 ProcessSurvivalProbeCommand.status(),
                 ProcessSurvivalProbeCommand.stop(),

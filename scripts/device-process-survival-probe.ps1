@@ -41,7 +41,7 @@ switch ($Action) {
             if ($LASTEXITCODE -ne 0 -or -not $scriptLines) {
                 throw 'Could not generate the device-side launcher script.'
             }
-            [System.IO.File]::WriteAllLines($temp, [string[]]$scriptLines,
+            [System.IO.File]::WriteAllText($temp, (($scriptLines -join "`n") + "`n"),
                     (New-Object System.Text.UTF8Encoding($false)))
             & $adb.Source push $temp $remoteLauncher | Out-Host
             if ($LASTEXITCODE -ne 0) { throw 'Could not stage launcher script.' }

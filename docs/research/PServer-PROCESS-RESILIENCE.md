@@ -61,15 +61,43 @@ Those observations are useful design input, not Retroid proof.
 
 ### UNTESTED on our Retroid hardware
 
-- survival on local Flip 2 `.130`;
 - survival on reporter Flip 2 12 GB `.311`;
-- individual Recents swipe;
 - Retroid Clear All;
 - standby cleaner;
-- Android Force Stop;
 - Retroid cgroup placement;
-- deep-sleep scheduling;
+- deep-sleep scheduling without USB/ADB attached;
 - package replacement/uninstall behavior.
+
+### Local Flip 2 `.130` physical result (2026-10-07)
+
+The installed stable v1.5.9 app was left with bypass OFF and native limit `0`.
+For this research run, an unsigned APK was staged under `/data/local/tmp` as a
+classpath; it was **not installed** over the stable app. PServer launched the
+bounded probe with a recorded PID/starttime identity.
+
+After the app was removed individually from Recents, the probe retained the
+same process identity and continued its two-second heartbeats. With the screen locked,
+`dumpsys power` reported `mWakefulness=Asleep` for roughly two minutes and the
+same probe continued without a large heartbeat gap. USB/ADB remained attached,
+so this is **screen-off survival**, not proof of unattended deep sleep or
+survival of Retroid's standby cleaner. The probe was stopped explicitly and
+logged `END reason=stop_requested`.
+
+The harmless sentinel was then attached to the stable app process using its
+PID and `/proc/<pid>/stat` starttime. After an explicit `am force-stop` of the
+app, the root worker wrote `RESTORE_REQUIRED owner_missing` and exited. The
+native charge limit remained `0` throughout. This proves the sentinel's
+device-side owner-death decision, **not** a charging restore: it has no
+charging-control command. The app was reopened and temporary device files
+were removed after the test.
+
+The physical run also exposed two harness issues. This PServer returns only
+the first line of multiline command output, so status now base64-encodes the
+root-owned log into one line before decoding it in Java. PowerShell must stage
+Android shell scripts with LF line endings; CRLF prevented the first sentinel
+launcher from running. The corrected status reader and an LF-staged sentinel
+were retested on-device. The PowerShell harnesses now write LF scripts but
+still need an end-to-end run using an installed research APK.
 
 ## Research probe
 
@@ -242,12 +270,11 @@ See `PROCESS-RESILIENCE-DECISION.md` and `RESTORE-ONLY-WATCHDOG-DESIGN.md`.
 
 Before any watchdog receives charging authority:
 
-1. prove detached survival on Retroid;
-2. measure screen-off/deep-sleep heartbeat gaps;
-3. prove exact PID/starttime identity on-device;
-4. run the harmless sentinel on-device;
-5. test Force Stop and package update behavior;
-6. define restore-write retry/failure policy;
-7. only then consider a restore-only charging prototype.
+1. repeat detached survival under the actual vendor cleaner and on `.311`;
+2. measure deep-sleep heartbeat gaps without USB/ADB attached;
+3. test package update behavior;
+4. compare Force Stop behavior of the probe itself;
+5. define restore-write retry/failure policy;
+6. only then consider a restore-only charging prototype.
 
 No production charging daemon is justified by current evidence.

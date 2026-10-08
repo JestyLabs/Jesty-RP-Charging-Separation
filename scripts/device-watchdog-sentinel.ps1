@@ -61,7 +61,7 @@ switch ($Action) {
             if ($LASTEXITCODE -ne 0 -or -not $scriptLines) {
                 throw 'Could not generate sentinel script.'
             }
-            [System.IO.File]::WriteAllLines($temp, [string[]]$scriptLines,
+            [System.IO.File]::WriteAllText($temp, (($scriptLines -join "`n") + "`n"),
                     (New-Object System.Text.UTF8Encoding($false)))
             & $adb.Source push $temp $remoteScript | Out-Host
             if ($LASTEXITCODE -ne 0) { throw 'Could not stage sentinel script.' }

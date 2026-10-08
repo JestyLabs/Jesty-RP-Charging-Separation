@@ -60,7 +60,8 @@ final class ProcessSurvivalProbeCommand {
     }
 
     static String status() {
-        return "tail -n 80 " + LOG_PATH + " 2>/dev/null";
+        // pservice returns only the first output line on this firmware.
+        return "tail -n 80 " + LOG_PATH + " 2>/dev/null | base64 -w 0";
     }
 
     static String stop() {

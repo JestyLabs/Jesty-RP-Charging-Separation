@@ -17,7 +17,9 @@ final class RestoreWatchdogSentinelScript {
 
     /** PServer gets an operator-free command; the script performs its own bounded detach. */
     static String launchCommand() { return "sh " + SCRIPT_PATH; }
-    static String statusCommand() { return "cat " + OUTPUT_PATH + " 2>/dev/null"; }
+    static String statusCommand() {
+        return "cat " + OUTPUT_PATH + " 2>/dev/null | base64 -w 0";
+    }
     static String stopCommand() { return "touch " + STOP_PATH; }
     static String cleanCommand() {
         return "rm -f " + SCRIPT_PATH + " " + OUTPUT_PATH + " " + STOP_PATH;

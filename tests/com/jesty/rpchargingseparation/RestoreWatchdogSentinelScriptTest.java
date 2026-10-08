@@ -7,6 +7,8 @@ public final class RestoreWatchdogSentinelScriptTest {
     }
 
     private static void pserverCommandsStayFixedAndChargingBlind() {
+        check(RestoreWatchdogSentinelScript.statusCommand().contains("base64 -w 0"),
+                "sentinel status must survive pservice first-line output");
         String launch = RestoreWatchdogSentinelScript.launchCommand();
         check(launch.equals("sh " + RestoreWatchdogSentinelScript.SCRIPT_PATH),
                 "PServer launch must only execute fixed script");
