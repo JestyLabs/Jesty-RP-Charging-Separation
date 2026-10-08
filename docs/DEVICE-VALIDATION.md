@@ -39,7 +39,8 @@ For the issue #2 reliability changes (v1.5.9), check on Flip 2 firmware
 1.0.0.311 if possible, with the screen off and without opening the app during
 each run. Attach **COPY DIAGNOSTICS** output to each result.
 
-- [x] Bypass turned on while unplugged (READY), screen off, then plug in:
+- [ ] On the reporter's .311 firmware, bypass turned on while unplugged (READY),
+  screen off, then plug in:
   charging stops at the stop level without reopening the app.
 - [ ] Bypass turned on while plugged in below the stop level, screen off: the
   native limit changes from `0` to `limitMax` within one percentage point.
@@ -64,7 +65,108 @@ clearing data. Its dashboard showed RUNNING FROM CHARGER at 80%, the battery
 was Not charging, and the service was still monitoring. Its charging code is
 the same as the tested build; only the UI and screen timeout changed.
 The [80% screenshot](../assets/screenshots/flip2-v1.5.9-80percent.png) shows
-that final build. The reporter's 1.0.0.311 device remains untested.
+that final build.
+
+The reporter retested v1.5.9 on
+`RPFlip2_HV1.0.0.311_20260725_132332_user`. At 11:07, the service logged
+`USB detected (BATTERY_CHANGED) at 65%` and `Holding CPU awake until the stop
+level`. The next saved event was a fresh `Start (ENABLE)` at 12:04, when the
+app was reopened at 99%; separation activated then. The notification had
+disappeared while the app was closed. No `Service destroyed` or sticky restart
+appears in the saved events between those times. This strongly suggests that
+the process or service stopped, but the diagnostics do not establish whether
+the cause was memory pressure, a crash, a Recents/Task Manager action, or a
+vendor policy. `Background restricted: false` does not rule out those causes.
+
+The same reporter then isolated Retroid's two vendor process-protection
+controls. With only **Clean process when standby -> Ignored packages** enabled,
+the service survived and stopped charging at 80%. With only **Whitelist
+Application** enabled, it also survived and stopped at 80%; Whitelist
+Application additionally preserved the foreground notification when the
+dashboard was closed. This proves that either vendor protection was sufficient
+for the tested Flip 2 12 GB .311 session. It does **not** prove which setting
+key or storage format backs either Retroid UI.
+
+### Read-only Retroid Whitelist Application backend proof
+
+The diagnostic branch intentionally does not change process-protection state.
+**COPY DIAGNOSTICS** performs one privileged read, `settings list system`,
+through the already-used `PServerBinder`, then filters the result locally.
+`app_whiteList` began as an OdinTools-derived candidate. The local Flip 2
+`.130` before/after result below proves its link to this Retroid UI on that
+firmware; the `.311` storage mapping remains untested.
+
+On each firmware under test, capture these three samples without changing
+charging settings:
+
+1. Remove Jesty RP Charging Separation from **Whitelist Application** and from
+   **Clean process when standby -> Ignored packages**. Copy diagnostics.
+2. Add only Jesty RP Charging Separation to **Whitelist Application** using the
+   Retroid UI. Copy diagnostics again.
+3. Remove it from **Whitelist Application** again. Copy diagnostics a third
+   time.
+
+Compare the **Relevant system settings** blocks. The Whitelist Application
+backend is proven only when an exact package token or other setting change
+appears when the UI entry is added and reverses when it is removed. Repeat the
+same one-variable sequence for **Clean process when standby -> Ignored
+packages** to identify that separate backend. Prefer evidence from both the
+maintainer Flip 2 .130 and reporter Flip 2 .311 before adding any write path.
+A read failure or missing `app_whiteList` remains **unknown**, not
+"unsupported" or "unprotected".
+
+For an APK-independent proof, the branch also includes a read-only ADB capture
+harness. It never writes Settings or charging controls:
+
+```powershell
+.\scripts\capture-retroid-process-protection.ps1 -Label whitelist-off-1
+# Add only Jesty RP Charging Separation in Retroid -> Whitelist Application.
+.\scripts\capture-retroid-process-protection.ps1 -Label whitelist-on
+# Remove it again.
+.\scripts\capture-retroid-process-protection.ps1 -Label whitelist-off-2
+```
+
+It records only model/build metadata plus `settings list system/global/secure`,
+the direct `app_whiteList` candidate read and the current device-idle whitelist.
+The capture folder is append-only by label so a later run cannot silently replace
+earlier evidence.
+
+Compare adjacent captures:
+
+```powershell
+.\scripts\compare-retroid-process-protection.ps1 `
+  -Before .\build\retroid-process-protection\whitelist-off-1 `
+  -After  .\build\retroid-process-protection\whitelist-on
+
+.\scripts\compare-retroid-process-protection.ps1 `
+  -Before .\build\retroid-process-protection\whitelist-on `
+  -After  .\build\retroid-process-protection\whitelist-off-2
+```
+
+A credible backend mapping must change in the expected direction on the first
+transition and reverse on the second. A one-way difference is insufficient
+because unrelated firmware state can change between samples.
+
+Repeat with new labels for **Clean process when standby -> Ignored packages**,
+again changing only that one Retroid control.
+
+On the maintainer's Flip 2 `.130` with stable v1.5.9, the read-only
+Whitelist Application OFF -> ON -> OFF capture showed that the UI added the
+exact app package to `Settings.System.app_whiteList` and removed it again.
+`display_app_whiteList` also changed and reverted; do not assume it is an
+independent protection list. The complete first and third captures matched.
+The ignored-packages entry and Android device-idle whitelist did not change.
+
+A separate `.130` Ignored packages test, with the cleaner OFF at both capture
+endpoints, showed the exact app package removed from
+`Settings.System.auto_clean_ignored_packages` and then restored. The captured
+state before and after restoration matched. The Retroid UI required briefly
+enabling the cleaner to edit that list, so intermediate state was not captured;
+no other persistent setting changed between the OFF endpoints. The UI showed
+the delay as **1 minute** when the raw setting was `1`; do not infer seconds
+from that raw value. Charging separation remained OFF and the native limit was
+`0` during these read-only captures. Neither mapping is yet verified on the
+reporter's `.311` firmware.
 
 - [ ] Normal charging is confirmed before enabling.
 - [ ] Enable reaches `Not charging` and `limit == limitMax`.

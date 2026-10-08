@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add Android's recent process exit reasons to COPY DIAGNOSTICS and persist
+  service-start and task-removal events. This helps distinguish a crash, low
+  memory kill, and user-requested stop when monitoring disappears.
+- Add a read-only Retroid process-protection probe to COPY DIAGNOSTICS. It
+  lists system settings through the existing PServer bridge, filters locally
+  to whitelist/cleaner candidates, and never writes vendor settings.
+
 ## 1.5.9
 
 - Fix issue #2 more fully: battery level and USB plug/unplug events now wake
