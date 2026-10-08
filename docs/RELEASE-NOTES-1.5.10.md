@@ -13,7 +13,8 @@ background-service termination without changing those settings.
 On the reported Flip 2 12 GB firmware 1.0.0.311, add the app to **Settings →
 Handheld Settings → Advanced → Whitelist application** to keep the charging
 monitor active while the screen is off. See [issue #2](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/issues/2).
-The issue remains open for confirmation of the underlying service behavior.
+The linked issue documents the reporter's results and the verified whitelist
+workaround.
 
 The charging-controller scenarios, GitHub CI tests, and unsigned Android build
 passed. The exact signed APK was installed over v1.5.9 on a Flip 2 `.130`:
