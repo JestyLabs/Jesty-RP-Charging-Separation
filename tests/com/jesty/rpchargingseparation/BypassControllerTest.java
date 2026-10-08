@@ -127,7 +127,9 @@ public final class BypassControllerTest {
             check(platform.wakeLock == charging, "wake lock must be held only while charging "
                     + "to the stop level; state=" + state() + ", held=" + platform.wakeLock);
             check(platform.wakeLock == controller.wakeLockHeld(), "wake lock bookkeeping");
-            // Unplugging from ACTIVE intentionally keeps the native limit (no charger).
+            if (state() == BypassController.State.ARMED) {
+                check(device.limit == 0, "ARMED must have normal charging restored");
+            }
             if (state() != BypassController.State.ACTIVE && device.usb) {
                 check(device.limit == 0 || device.restoreBroken,
                         "battery must charge normally outside ACTIVE; state=" + state());
@@ -311,6 +313,62 @@ public final class BypassControllerTest {
         passed++;
     }
 
+    /** An unplugged ARMED service must not leave native separation behind. */
+    private static void unplugActiveRestoresBeforeArming() {
+        Rig rig = new Rig();
+        rig.device.usb = true;
+        rig.device.percent = 80;
+        rig.controller.start("ENABLE");
+        expectState(rig, BypassController.State.ACTIVE);
+        check(rig.device.limit == LIMIT_MAX && rig.settings.requested,
+                "test starts with native separation active");
+
+        rig.device.usb = false;
+        rig.event();
+        expectState(rig, BypassController.State.ARMED);
+        check(!rig.settings.requested && rig.settings.desired,
+                "unplug clears the native request but preserves the user's choice");
+        check(!rig.platform.stopped, "service keeps watching for the next charger");
+
+        rig.controller.destroy();
+        check(rig.device.limit == 0, "service teardown cannot leave a stale limit");
+        passed++;
+    }
+
+    private static void unplugRestoreFailureIsNotReportedAsReady() {
+        Rig rig = new Rig();
+        rig.device.usb = true;
+        rig.device.percent = 80;
+        rig.controller.start("ENABLE");
+        expectState(rig, BypassController.State.ACTIVE);
+
+        rig.device.restoreBroken = true;
+        rig.device.usb = false;
+        rig.event();
+        expectState(rig, BypassController.State.FAILED);
+        check(rig.device.limit == LIMIT_MAX, "failed restore must be visible to the test");
+        check(rig.controller.detail().startsWith("Critical restore failure"),
+                "restore failure must not be shown as READY");
+        check(rig.platform.keptNotice, "restore failure keeps a visible notice");
+        passed++;
+    }
+
+    private static void unplugAfterNativeAutoRestoreClearsRequest() {
+        Rig rig = new Rig();
+        rig.device.usb = true;
+        rig.device.percent = 80;
+        rig.controller.start("ENABLE");
+        expectState(rig, BypassController.State.ACTIVE);
+
+        rig.device.usb = false;
+        rig.device.limit = 0; // Some firmware may clear its own native limit on unplug.
+        rig.event();
+        expectState(rig, BypassController.State.ARMED);
+        check(!rig.settings.requested && rig.settings.desired,
+                "native auto-restore still clears the recorded hardware request");
+        passed++;
+    }
+
     /** After a process restart the native setting shows the limit was already reached. */
     private static void restartAdoptsExistingSeparation() {
         Rig rig = new Rig();
@@ -423,6 +481,9 @@ public final class BypassControllerTest {
         telemetryErrorWhileChargingRetries();
         unplugWhileRetryingArms();
         unplugAndReplugKeepsWorking();
+        unplugActiveRestoresBeforeArming();
+        unplugRestoreFailureIsNotReportedAsReady();
+        unplugAfterNativeAutoRestoreClearsRequest();
         restartAdoptsExistingSeparation();
         userTurningOffRestoresCharging();
         externalChangeTurnsOff();

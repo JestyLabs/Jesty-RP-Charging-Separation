@@ -12,6 +12,16 @@ Uses Retroid's own charging controls, with live battery/USB telemetry and automa
 Install it, enable Bypass charging, and forget about it.
 </p>
 
+> [!IMPORTANT]
+> **Retroid Pocket Flip 2 12 GB, firmware 1.0.0.311:** Retroid's background process handling can stop the charging monitor while the screen is off, even when Android does not mark the app as restricted. Add **Jesty RP Charging Separation** to **Settings → Handheld Settings → Advanced → Whitelist application** before relying on an automatic charge limit. In the [reported test](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/issues/2), this kept monitoring active through the 80% limit and kept the notification visible after closing the dashboard. Other firmware versions have not been ruled out.
+
+<details>
+<summary>Where to find Whitelist application (screenshot from issue #2)</summary>
+
+<img src="https://github.com/user-attachments/assets/e77d4e67-798c-4618-a2c7-d3a9f018d0d7" alt="Retroid Handheld Settings Advanced page showing Whitelist application" width="760">
+
+</details>
+
 <p align="center">
 <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/latest"><strong>Download latest APK</strong></a>
 · <a href="#how-it-works">How it works</a>

@@ -2,6 +2,7 @@ package com.jesty.rpchargingseparation;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -40,6 +41,8 @@ import android.widget.Toast;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -711,6 +714,7 @@ public final class MainActivity extends Activity {
         out.append("Android: ").append(Build.VERSION.RELEASE)
                 .append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
         out.append("Background restricted: ").append(backgroundRestricted()).append('\n');
+        appendProcessProtection(out);
         boolean auto = BypassService.autoLimitMode(prefs);
         out.append("Bypass on: ").append(prefs.getBoolean("desired_enabled", false))
                 .append(", start on boot: ").append(prefs.getBoolean("auto_on_boot", false))
@@ -731,11 +735,56 @@ public final class MainActivity extends Activity {
         } catch (Throwable error) {
             out.append("Telemetry error: ").append(error.getMessage()).append('\n');
         }
+        appendProcessExits(out);
         out.append("Recent events:\n");
         List<String> recent = BypassService.events(this).recent(80);
         if (recent.isEmpty()) out.append("(none)\n");
         for (String line : recent) out.append(line).append('\n');
         return out.toString();
+    }
+
+    private void appendProcessProtection(StringBuilder out) {
+        RetroidProcessProtection.inspect(RootBridge::exec, getPackageName())
+                .appendDiagnostics(out);
+    }
+
+    private void appendProcessExits(StringBuilder out) {
+        if (Build.VERSION.SDK_INT < 30) return;
+        out.append("Previous process exits:\n");
+        try {
+            ActivityManager manager = getSystemService(ActivityManager.class);
+            List<ApplicationExitInfo> exits = manager == null ? null
+                    : manager.getHistoricalProcessExitReasons(getPackageName(), 0, 5);
+            if (exits == null || exits.isEmpty()) {
+                out.append("(none recorded)\n");
+                return;
+            }
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+            for (ApplicationExitInfo exit : exits) {
+                out.append(format.format(new Date(exit.getTimestamp())))
+                        .append(" reason=").append(exitReason(exit.getReason()))
+                        .append(" (").append(exit.getReason()).append(')')
+                        .append(", status=").append(exit.getStatus())
+                        .append(", importance=").append(exit.getImportance())
+                        .append('\n');
+            }
+        } catch (Throwable error) {
+            out.append("(unavailable)\n");
+        }
+    }
+
+    private static String exitReason(int reason) {
+        switch (reason) {
+            case ApplicationExitInfo.REASON_EXIT_SELF: return "EXIT_SELF";
+            case ApplicationExitInfo.REASON_SIGNALED: return "SIGNALED";
+            case ApplicationExitInfo.REASON_LOW_MEMORY: return "LOW_MEMORY";
+            case ApplicationExitInfo.REASON_CRASH: return "CRASH";
+            case ApplicationExitInfo.REASON_CRASH_NATIVE: return "CRASH_NATIVE";
+            case ApplicationExitInfo.REASON_ANR: return "ANR";
+            case ApplicationExitInfo.REASON_USER_REQUESTED: return "USER_REQUESTED";
+            case ApplicationExitInfo.REASON_OTHER: return "OTHER";
+            default: return "UNKNOWN";
+        }
     }
 
     private void openExternal(String url) {
