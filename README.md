@@ -1,288 +1,192 @@
 <p align="center">
-  <img src="assets/branding/jesty_rp_header_lockup.png" alt="Jesty RP Charging Separation" width="760">
+<img src="assets/branding/jesty_rp_header_lockup.png" alt="Jesty RP Charging Separation" width="760">
 </p>
 
 <p align="center">
-  <strong>Play while plugged in without continuously charging the battery.</strong><br>
-  Uses Retroid's own charging controls, with live battery/USB telemetry and automatic safety fallback.
+<strong>Play while plugged in without continuously charging the battery.</strong><br>
+Uses Retroid's own charging controls, with live battery/USB telemetry and automatic safety fallback.
 </p>
 
 <p align="center">
-  <strong>No Magisk. No terminal. No need to keep the app open.</strong><br>
-  Install it, enable Bypass charging, and forget about it.
+<strong>No Magisk. No terminal. No need to keep the app open.</strong><br>
+Install it, enable Bypass charging, and forget about it.
+</p>
+
+> [!IMPORTANT]
+> **Retroid Pocket Flip 2 12 GB, firmware 1.0.0.311:** Retroid's background process handling can stop the charging monitor while the screen is off, even when Android does not mark the app as restricted. Add **Jesty RP Charging Separation** to **Settings → Handheld Settings → Advanced → Whitelist application** before relying on an automatic charge limit. In the [reported test](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/issues/2), this kept monitoring active through the 80% limit and kept the notification visible after closing the dashboard. Other firmware versions have not been ruled out.
+
+<details>
+<summary>Where to find Whitelist application (screenshot from issue #2)</summary>
+
+<img src="https://github.com/user-attachments/assets/e77d4e67-798c-4618-a2c7-d3a9f018d0d7" alt="Retroid Handheld Settings Advanced page showing Whitelist application" width="760">
+
+</details>
+
+<p align="center">
+<a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/latest"><strong>Download latest APK</strong></a>
+· <a href="#how-it-works">How it works</a>
+· <a href="#measured-results">Measured results</a>
+· <a href="https://www.buymeacoffee.com/jesty">☕ Support</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.9"><strong>Download APK</strong></a>
-  · <a href="#normal-charging-vs-charging-separation">How it works</a>
-  · <a href="docs/BENCHMARKS.md">Measurements</a>
-  · <a href="https://www.buymeacoffee.com/jesty">☕ Support development</a>
+<img alt="Retroid Pocket Flip 2" src="https://img.shields.io/badge/compatible-Flip%202-7C3AED?style=for-the-badge">
+<img alt="Retroid Pocket 5" src="https://img.shields.io/badge/compatible-RP5-7C3AED?style=for-the-badge">
+<img alt="Retroid Pocket Mini" src="https://img.shields.io/badge/compatible-Mini-7C3AED?style=for-the-badge">
+<img alt="Retroid Pocket Mini V2" src="https://img.shields.io/badge/compatible-Mini%20V2-7C3AED?style=for-the-badge">
+<img alt="Android 13" src="https://img.shields.io/badge/Android-13-3DDC84?style=for-the-badge&logo=android&logoColor=white">
+<img alt="No Magisk or rooting" src="https://img.shields.io/badge/setup-no%20Magisk%20%2F%20rooting-16A34A?style=for-the-badge">
+<img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
 </p>
 
 <p align="center">
-  <img alt="Retroid Pocket Flip 2" src="https://img.shields.io/badge/compatible-Flip%202-7C3AED?style=for-the-badge">
-  <img alt="Retroid Pocket 5" src="https://img.shields.io/badge/compatible-RP5-7C3AED?style=for-the-badge">
-  <img alt="Retroid Pocket Mini" src="https://img.shields.io/badge/compatible-Mini-7C3AED?style=for-the-badge">
-  <img alt="Retroid Pocket Mini V2" src="https://img.shields.io/badge/compatible-Mini%20V2-7C3AED?style=for-the-badge">
-  <img alt="Android 13" src="https://img.shields.io/badge/Android-13-3DDC84?style=for-the-badge&amp;logo=android&amp;logoColor=white">
-  <img alt="No Magisk or rooting" src="https://img.shields.io/badge/setup-no%20Magisk%20%2F%20rooting-16A34A?style=for-the-badge">
-  <img alt="GPL 3" src="https://img.shields.io/badge/code-GPL--3.0-8B5CF6?style=for-the-badge">
+<img src="https://github.com/user-attachments/assets/0e4346b9-dc09-4348-b414-1398aeac9f4b" alt="v1.5.2 charging toward 80 percent on Retroid Pocket Flip 2" width="960">
 </p>
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/0e4346b9-dc09-4348-b414-1398aeac9f4b" alt="v1.5.2 charging toward 80 percent on Retroid Pocket Flip 2" width="960">
-</p>
+---
 
-## What the app does
+### What the app does
 
-Normally, USB powers the handheld and charges its battery at the same time.
-Charging Separation uses Retroid's built-in privileged controls to stop active
-battery charging while USB remains connected and continues supplying the
-running device.
+Normally, USB powers the handheld **and** charges the battery at the same time.  
+Charging Separation uses Retroid's built-in privileged controls to stop active battery charging while USB continues powering the device.
 
-- No user-managed root, Magisk, Termux, or ADB setup.
-- Live battery current, USB input, direct-to-device estimate, and temperature.
-- **Right away** or **At a battery level**: stop active charging immediately,
-  or charge to a chosen level (80% by default) and charge again at a second
-  chosen level (70% by default). The charge-again level stays at least five
-  percentage points below the stop level.
-- In battery-level mode, react to battery level and USB events and keep the CPU
-  awake while charging toward the stop level, so the threshold is applied with
-  the screen off. The wake lock is released when bypass starts, USB
-  disconnects, or bypass stops.
-- Verifies that separation actually activated before reporting success.
-- Restores normal charging if validation or safety telemetry fails, then tries
-  again with increasing delays (shown as **TRYING AGAIN**).
-- **COPY DIAGNOSTICS** copies the app version, firmware, settings, readings and
-  recent events for a bug report. It shows a warning if Android restricts the
-  app in the background.
-- Optional restore after a normal reboot.
-- In-app updates: an **UPDATE** button appears next to SUPPORT and GITHUB when a
-  newer stable release is published, and installs it after you confirm.
-- Does not change CPU governors, CPU frequencies, or unrelated Android settings.
+- No Magisk, root, Termux or ADB required
+- Live battery current, USB input, direct-to-device estimate and temperature
+- **Right away** or **At a battery level** (default: stop at 80%, charge again at 70%)
+- Verifies that separation actually activated before reporting success
+- Automatic safety fallback to normal charging if something looks wrong
+- Optional restore after reboot
+- In-app updates
+- Runs in the background - you can close the app
 
-The app uses Retroid's own `PServerBinder` bridge. It does not physically
-disconnect the battery, so small positive or negative currents can still appear
-depending on load, charger, firmware, temperature, and battery state.
+The app does **not** physically disconnect the battery, so small positive or negative currents can still appear depending on load, charger, firmware and temperature.
 
-### Set a battery threshold
+---
 
-Enable **Bypass charging** and choose **At a battery level** under **When to stop
-charging**. Set **Stop charging at** to the level where the app should switch to
-USB power (80% by default). Set **Charge again at** to the lower level where
-normal charging should resume (70% by default). You can type percentages or use
-the −/+ buttons in five-point steps. The app adjusts invalid values and keeps
-the two levels at least five percentage points apart. Choose **Right away** to
-start separation as soon as it is available instead. Existing 1.5.0-rc1
-settings are migrated automatically.
-
-When **Bypass charging** is off, the mode and reboot controls are disabled.
-Turning it off clears the reboot setting but remembers the selected charging
-mode and the saved stop and charge-again percentages for the next time you
-enable it.
-
-### v1.5.2 on Retroid Pocket Flip 2
-
-These screenshots from the maintainer's Flip 2 show the released v1.5.2
-dashboard with **RIGHT AWAY** selected, and **AT A BATTERY LEVEL** selected
-while normal charging continues at 17% toward an 80% stop level. The second
-screen shows a user-set 65% charge-again level. They confirm the screen layout
-and displayed charging-to-limit state on the device; they do not show the
-transition at 80% or the later resume at 65%.
-
-In v1.5.9, the charging status fills the top of the card, with no small LIVE
-label. The UPDATE, GITHUB, and SUPPORT buttons follow that order when an
-update is available. The wide layout was visually checked on a Flip 2; the
-narrow-screen layout remains to be checked. The screenshot below shows the
-device at the selected 80% stop level after the screen-off charge test.
-
-<p align="center">
-  <img src="assets/screenshots/flip2-v1.5.9-80percent.png" alt="v1.5.9 on Flip 2 at 80 percent, running from charger" width="960">
-</p>
-
-The Flip 2 test started with bypass enabled while unplugged (READY), then
-connected power with the screen asleep. The service detected the cable, held
-the CPU awake while charging, and applied native separation at 80% without
-reopening the app. See the [device validation notes](docs/DEVICE-VALIDATION.md)
-for the observations and remaining tests on other firmware.
-
-<p align="center">
-  <img src="assets/screenshots/flip2-v1.5.7-live.png" alt="v1.5.7 LIVE card on Retroid Pocket Flip 2" width="760">
-</p>
-
-<p align="center">
-  <img src="assets/screenshots/flip2-v1.5.2-right-away.png" alt="v1.5.2 Right away mode on Retroid Pocket Flip 2" width="760">
-</p>
-
-## Normal charging vs Charging Separation
+### How it works
 
 | | Normal charging | Charging Separation |
-| --- | --- | --- |
+|---|-----------------|---------------------|
 | USB connected | Yes | **Yes** |
 | Handheld remains powered | Yes | **Yes** |
 | Battery actively charging | Yes | **No** |
 | Android battery state | `Charging` | **`Not charging`** |
-| Live safety monitoring | — | **Yes** |
-| App must stay open | — | **No** |
-| Root/Magisk setup | — | **No** |
+| Live safety monitoring | - | **Yes** |
+| App must stay open | - | **No** |
+| Root / Magisk needed | - | **No** |
 
-## Measured on Retroid Pocket Flip 2
+---
 
-A controlled comparison captured 30 one-second samples per state with the same
-USB cable, screen state, workload, and ambient conditions:
+### Measured results (Retroid Pocket Flip 2)
+
+Controlled comparison, 30 one-second samples per state, same cable, screen state and workload:
 
 | Metric | Normal charging | Charging separated |
-| --- | ---: | ---: |
+|--------|----------------:|-------------------:|
 | Android state | `Charging` | **`Not charging`** |
-| Native limit | `0/10` | **`10/10`** |
+| Native limit | 0/10 | **10/10** |
 | Average battery current | +0.239 A | **-0.011 A** |
-| Charge-counter change | +2,449 uAh | **-109 uAh** |
+| Charge-counter change | +2,449 µAh | **-109 µAh** |
 | Average USB input | 2.286 W | **1.379 W** |
-| Direct-to-device proxy | 1.368 W | 1.422 W |
-| Battery temperature | 29.7 C | 29.7 C |
+| Battery temperature | 29.7 °C | 29.7 °C |
 
-The important behavior is consistent across the capture: Android changed to
-`Not charging`, battery flow fell to approximately neutral, and USB remained
-connected and continued supplying the handheld.
+This is a short functional measurement, **not** a battery-health or longevity study.  
+Full method and samples → [benchmarks](docs/BENCHMARKS.md)
 
-> [!NOTE]
-> This is a short functional measurement, not a battery-health or longevity
-> study. See the [method and sanitized samples](docs/BENCHMARKS.md).
+---
 
-## Compatibility
+### Set a battery threshold
 
-| Device | Evidence |
-| --- | --- |
-| **Retroid Pocket Flip 2** | Compatible; charging behavior measured on earlier builds, with v1.5.2 layout and charging-to-limit state shown in screenshots above |
-| **Retroid Pocket 5** | Compatible according to maintainer and community testing |
-| **Retroid Pocket Mini** | Compatible according to community testing |
-| **Retroid Pocket Mini V2** | Compatible according to community testing |
-| Other Retroid models | Not validated — treat as unsupported until tested |
+1. Enable **Bypass charging**
+2. Choose **At a battery level**
+3. Set **Stop charging at** (default 80%)
+4. Set **Charge again at** (default 70%)
+
+The two levels stay at least 5 percentage points apart.  
+Choose **Right away** if you want separation as soon as USB is connected.
+
+---
+
+### Compatibility
+
+| Device | Status |
+|--------|--------|
+| **Retroid Pocket Flip 2** | Compatible (measured + screenshots) |
+| **Retroid Pocket 5** | Compatible (maintainer + community) |
+| **Retroid Pocket Mini** | Compatible (community) |
+| **Retroid Pocket Mini V2** | Compatible (community) |
+| Other Retroid models | Not validated |
 | Unrelated Android devices | Unsupported |
 
-Compatibility is based on the required Retroid control nodes and privileged
-bridge, not a model-name allowlist. Before enabling separation, the app checks
-those capabilities and validates the resulting hardware state. A similar
-chipset or device name is not treated as proof of successful operation.
+Compatibility is based on the required Retroid control nodes and privileged bridge, not a simple model-name list.
 
-The maintainer reports full charging-separation compatibility, tested with help
-from owners in the
-[Retroid community thread](https://www.reddit.com/r/retroid/comments/1wrl00f/noroot_charging_separation_app_for_rp5_flip_2/)
-for the four models above. These are compatibility reports, not equivalent
-per-device benchmark captures. The exact v1.5.2 screen is now documented on
-Flip 2, but a complete automatic charge/resume cycle has not yet been recorded
-for each model; see [live results](docs/LIVE-RESULTS.md).
+---
 
-## Safety behavior
+### Safety behavior
 
-Before and while separation is active, the controller:
+Before and while separation is active the app:
 
-- verifies the charging-control capability and written limit;
-- confirms Android reports `Not charging`;
-- monitors USB input, battery current, charge counter, and temperature;
-- restores normal charging if validation or telemetry fails;
-- disables separation after repeated evidence that the battery may be powering
-  the handheld instead of USB.
+- verifies the charging-control capability
+- confirms Android reports `Not charging`
+- monitors USB input, battery current, charge counter and temperature
+- restores normal charging if validation or telemetry fails
+- disables separation after repeated evidence that the battery may be powering the device instead of USB
 
-## Install and forget
+---
 
-1. Download `Jesty-RP-Charging-Separation-1.5.8.apk` from the
-   [latest stable release](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.9).
-2. Install and open **Jesty RP Charging Separation**.
-3. Connect a suitable USB charger.
-4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic.
-5. Enable **Maintain bypass charging after reboot** only if you want that behavior.
+### How to use
 
-After that, the dashboard can be closed and the app can be individually swiped
-away from Recents while the foreground controller continues monitoring the
-state.
+1. [Download the latest APK](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/latest)
+2. Install and open **Jesty RP Charging Separation**
+3. Connect a suitable USB charger
+4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic
+5. (Optional) Enable **Maintain bypass charging after reboot**
 
-**Force stop is different.** Android Settings → Force stop blocks the app and
-its boot receiver until it is opened again. On the tested Flip 2 firmware, the
-vendor launcher's **Clear all** action also behaved like a force-stop; an
-individual swipe of the app did not. Reopen the app after either force-stop
-path.
+After that you can close the app. The controller continues running in the background.
 
-The service uses lightweight periodic telemetry and no busy loop. Automatic
-charging toward a stop level holds a partial CPU wake lock until that phase
-ends; this can use extra power, although it runs only while USB is connected.
-Turning the toggle off, or a safety failure, restores normal charging.
+**Note:** Android **Force stop** (or the vendor launcher's "Clear all") blocks the app until you open it again. An individual swipe from Recents does not.
 
-### Updates
+---
 
-When the app is opened it asks GitHub, at most once an hour, for this
-repository's latest stable release (pre-releases are ignored). This is the only
-background network request the app makes and it sends no telemetry. If a newer version
-exists, an **UPDATE** button appears in the top bar and the app asks once
-whether to install it. Updating downloads the release APK, checks its size and
-the SHA-256 digest that GitHub publishes for the asset, confirms it is a newer
-build of the same app signed with the same certificate, and passes it to
-Android's installer. Android asks for final confirmation; the first time it
-also asks you to allow this app to install apps. Settings are kept, and bypass
-charging resumes after the update if it was on and USB is connected.
+### Support the project
 
-Versions before 1.5.6 do not have the in-app updater. Install 1.5.6 manually
-once; later stable releases can be offered inside the app.
+Free and open source. No features locked behind donations.
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/jesty">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="217">
+  </a>
+</p>
+
+- ⭐ Star the repository so other Retroid owners can find it
+- 🧪 Share carefully redacted results from another firmware
+- 🐛 Report reproducible safety or compatibility issues
+
+---
+
+### Documentation
+
+[Architecture](docs/ARCHITECTURE.md) · 
+[Device validation](docs/DEVICE-VALIDATION.md) · 
+[Live results](docs/LIVE-RESULTS.md) · 
+[Benchmarks](docs/BENCHMARKS.md) · 
+[Release integrity](docs/RELEASE-INTEGRITY.md) · 
+[Research provenance](PROVENANCE.md) · 
+[Project notice](NOTICE.md)
 
 <details>
 <summary><strong>Technical implementation</strong></summary>
 
-The app reaches Retroid's hidden `PServerBinder` through Android's service
-manager. The vendor transaction accepts a two-element String array and runs a
-narrowly scoped command through Retroid's privileged `pservice` path.
+The app reaches Retroid's hidden `PServerBinder` through Android's service manager. The vendor transaction accepts a two-element String array and runs a narrowly scoped command through Retroid's privileged `pservice` path.
 
-See [Architecture](docs/ARCHITECTURE.md) for the state machine and failure
-behavior.
+See [Architecture](docs/ARCHITECTURE.md) for the state machine and failure behavior.
 
 </details>
 
 <details>
 <summary><strong>Build from source</strong></summary>
 
-Requirements: PowerShell 5.1+, Android SDK platform 28+, Android Build Tools
-34+, and JDK 17.
+Requirements: PowerShell 5.1+, Android SDK platform 28+, Android Build Tools 34+, JDK 17.
 
 ```powershell
 .\build.ps1
-```
-
-Run the JDK-only tests (no device or Android SDK needed):
-
-```powershell
-.\scripts\test-all.ps1
-```
-
-Signing is opt-in and reads the password interactively. The repository contains
-no signing key or password.
-
-</details>
-
-## Support and documentation
-
-Jesty RP Charging Separation is free and open source. No feature is locked
-behind donations.
-
-- ⭐ Star the repository so other Retroid owners can find it.
-- 🧪 Share carefully redacted results from another firmware or device.
-- 🐛 Report reproducible safety or compatibility issues.
-- ☕ [Buy me a coffee](https://www.buymeacoffee.com/jesty) to support device
-  testing and future development.
-
-Documentation: [architecture](docs/ARCHITECTURE.md) ·
-[device validation](docs/DEVICE-VALIDATION.md) ·
-[live results](docs/LIVE-RESULTS.md) ·
-[benchmarks](docs/BENCHMARKS.md) ·
-[release integrity](docs/RELEASE-INTEGRITY.md)
-
-## License, provenance, and independence
-
-- Source code and build scripts: [GPL-3.0](LICENSE).
-- Jesty branding and project artwork: [ASSETS-LICENSE.md](ASSETS-LICENSE.md).
-- Third-party names: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-- AI assistance: [full disclosure](AI_DISCLOSURE.md).
-
-This is an independent community project and is not affiliated with or endorsed
-by Retroid. Code, documentation, and visual assets were developed with
-disclosed generative-AI assistance under the maintainer's direction,
-supervision, review, and final approval. Hardware claims are based on physical
-device evidence, not AI output alone.
