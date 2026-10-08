@@ -16,3 +16,7 @@ diff for personal information.
 ## Research and attribution
 
 Keep existing license, SPDX and provenance notices intact. If a change materially uses external code, research or prior art, include the upstream project and an exact commit or URL where practical. Record project-specific device findings and test provenance in [PROVENANCE.md](PROVENANCE.md).
+
+## Publication privacy
+
+Keep detailed security evidence and device/session identifiers local. Follow [the publication policy](SECURITY-PUBLICATION.md) before pushing research or reports.
