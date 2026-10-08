@@ -1,62 +1,26 @@
 package com.jesty.rpchargingseparation;
 
 public final class ProcessSurvivalProbeCommandTest {
-    private static int passed;
-
-    private static void check(boolean condition, String message) {
-        if (!condition) throw new AssertionError(message);
-    }
-
-    private static void binderCommandIsTinyAndOperatorFree() {
-        String command = ProcessSurvivalProbeCommand.launchCommand();
-        check(command.length() <= ProcessSurvivalProbeCommand.MAX_PSERVER_COMMAND_CHARS,
-                "launch command exceeds PServer ceiling: " + command.length());
-        check(command.equals("sh " + ProcessSurvivalProbeCommand.LAUNCHER_PATH),
-                "binder command must only execute the staged script");
-        check(!command.contains("&"), "binder command must not background inline");
-        check(!command.contains(">"), "binder command must not redirect inline");
-        check(!command.contains("setsid"), "binder command must not use setsid");
-        passed++;
-    }
-
-    private static void launcherScriptIsBoundedAndChargingBlind() {
-        String low = ProcessSurvivalProbeCommand.launcherScript(-1);
-        String high = ProcessSurvivalProbeCommand.launcherScript(Integer.MAX_VALUE);
-        check(low.contains(" " + ProcessSurvivalProbeCommand.MIN_DURATION_SECONDS
-                + " </dev/null"), "minimum duration clamp");
-        check(high.contains(" " + ProcessSurvivalProbeCommand.MAX_DURATION_SECONDS
-                + " </dev/null"), "maximum duration clamp");
-        check(high.contains("app_process / " + ProcessSurvivalProbeCommand.PROBE_CLASS),
-                "launcher must target fixed probe class");
-        check(high.contains("nohup"), "launcher must detach stdio");
-        check(high.contains("sleep 1"), "launcher must keep parent alive briefly");
-        check(!high.contains("setsid"), "launcher must avoid unproven setsid path");
-        check(!high.contains("charge_control"), "probe must not touch charge controls");
-        check(!high.contains("/sys/class/power_supply"),
-                "probe must not touch power-supply sysfs");
-        check(!high.contains("settings put"), "probe must not mutate Settings");
-        passed++;
-    }
-
-    private static void supportCommandsStayInTempOnly() {
-        check(ProcessSurvivalProbeCommand.status().contains("base64 -w 0"),
-                "multiline status must survive pservice first-line output");
-        for (String command : new String[]{
-                ProcessSurvivalProbeCommand.status(),
-                ProcessSurvivalProbeCommand.stop(),
-                ProcessSurvivalProbeCommand.clean()}) {
-            check(command.contains("/data/local/tmp/jesty-rp-process-survival"),
-                    "support command escaped probe namespace: " + command);
-            check(!command.contains("charge_control"), "support command touches charging");
-            check(!command.contains("settings put"), "support command mutates Settings");
-        }
-        passed++;
-    }
-
+    private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
     public static void main(String[] args) {
-        binderCommandIsTinyAndOperatorFree();
-        launcherScriptIsBoundedAndChargingBlind();
-        supportCommandsStayInTempOnly();
-        System.out.println("Process survival probe command tests passed: " + passed);
+        String apk = "/data/local/tmp/session/candidate.apk";
+        String low = ProcessSurvivalProbeCommand.launcherScript(apk, -1);
+        String high = ProcessSurvivalProbeCommand.launcherScript(apk, Integer.MAX_VALUE);
+        check(low.contains("run 60 </dev/null"), "minimum duration");
+        check(high.contains("run 1800 </dev/null"), "maximum duration");
+        check(high.contains("export CLASSPATH='" + apk + "'"), "candidate propagated to worker and controls");
+        check(!high.contains("pm path"), "stable app must never be substituted");
+        check(high.contains("exec app_process / " + ProcessSurvivalProbeCommand.PROBE_CLASS), "control entry point");
+        check(high.contains("kill -0"), "bounded launch acknowledgement");
+        check(!high.contains("setsid"), "unsupported detach mechanism");
+        for (String command : new String[]{ ProcessSurvivalProbeCommand.launchCommand(),
+                ProcessSurvivalProbeCommand.status(), ProcessSurvivalProbeCommand.stop(), ProcessSurvivalProbeCommand.clean() }) {
+            check(command.length() <= 255 && command.startsWith("sh " + ProcessSurvivalProbeCommand.LAUNCHER_PATH), "short fixed command");
+        }
+        for (String invalid : new String[]{ "", "/data/app/stable.apk", "/data/local/tmp/../stable.apk", "/data/local/tmp/a.apk;id", "/data/local/tmp/.hidden.apk" }) {
+            try { ProcessSurvivalProbeCommand.launcherScript(invalid, 60); throw new AssertionError("accepted " + invalid); }
+            catch (IllegalArgumentException expected) { }
+        }
+        System.out.println("Probe launcher candidate, bounds and invalid-path regressions passed.");
     }
 }

@@ -164,6 +164,7 @@ self-detach launcher returned in ~1.0 s
 owner alive      -> sentinel did not fire
 owner killed     -> RESTORE_REQUIRED owner_missing
 explicit Stop    -> SENTINEL_END stop_requested
+SENTINEL_END observation_unavailable
 ```
 
 The research host-test surface is now:
@@ -176,11 +177,12 @@ Restore watchdog sentinel script tests passed: 4
 Restore retry policy tests passed: 2
 ```
 
-That is 18 JDK policy/command checks, plus the static no-charging/no-vendor-policy guard.
+Those counts describe the earlier shell prototype. Current regression coverage is
+listed in `PServer-PROCESS-RESILIENCE.md`.
 
 During this work a shell bug was caught before device use: positional field 20 must be
 addressed as `${20}`, not `$20`, otherwise POSIX shell can parse it as `$2` followed
-by `0`. The test now pins the correct syntax.
+by `0`. The current Java worker uses the shared host-tested Linux process identity parser.
 
 This host result proves only the ownership/sentinel logic under a normal Linux shell. It
 does not prove Android toybox behavior, PServer launch behavior, Retroid cgroups, or
@@ -204,7 +206,10 @@ a fixed shell script, and asks PServer to run only:
 sh /data/local/tmp/jesty-rp-watchdog-sentinel.sh
 ```
 
-The script self-detaches its worker and then watches the owner identity. Expected
+The staged script launches a bounded Java worker from the explicit research APK.
+The worker uses `SystemClock.elapsedRealtime()`, which includes suspend, and the
+shared exclusive-lock/private-file runtime. It writes only research output under
+`/data/jesty-rp-research-sentinel`; it never performs a restore. Expected
 research outcomes are only:
 
 ```text
@@ -212,6 +217,7 @@ RESTORE_REQUIRED owner_missing
 RESTORE_REQUIRED owner_mismatch
 RESTORE_REQUIRED lease_expired
 SENTINEL_END stop_requested
+SENTINEL_END observation_unavailable
 ```
 
 None of those performs a restore; they only show what a future watchdog **would** have
@@ -230,4 +236,4 @@ behavior on the device.
 
 ## Lease boundary
 
-The current harmless sentinel has a fixed bounded lease and no renewal API. Expiry emits a research marker and exits; it cannot restore charging. This is intentionally different from a future production helper. Before any production prototype, separately specify authenticated renewal, monotonic expiry, exact boot/PID/starttime ownership and restore/readback behavior. The host retry model does not establish physical recovery safety.
+The current harmless sentinel has a fixed bounded elapsed-time lease and no renewal API. An unreadable owner identity is unavailable, not proof of owner death; only an absent process reports owner_missing. Scheduling may delay emission of a terminal marker after expiry. Duplicate Start and Clean during an active worker are refused. The lock inode and bootstrap artifacts are retained after Clean. Android filesystem/SELinux access and physical timing remain pending validation. Expiry emits a research marker and exits; it cannot restore charging. This is intentionally different from a future production helper. Before any production prototype, separately specify authenticated renewal, monotonic expiry, exact boot/PID/starttime ownership and restore/readback behavior. The host retry model does not establish physical recovery safety.

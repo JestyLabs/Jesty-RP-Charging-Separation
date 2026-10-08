@@ -4,45 +4,36 @@ import android.os.Process;
 import android.os.SystemClock;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Research-only detached process probe.
  *
  * It never reads or writes charging controls. It writes a bounded heartbeat under
- * /data/local/tmp so device-side tests can prove whether a PServer-launched root
+ * a root-private directory so device-side tests can prove whether a PServer-launched root
  * app_process survives Retroid process cleaning independently of the Android app.
  */
 public final class ProcessSurvivalProbe {
-    private static final String LOCK_PATH = "/data/local/tmp/jesty-rp-process-survival.lock";
     private static final long HEARTBEAT_MS = 2_000L;
+    private static ResearchRuntime runtime;
 
     private ProcessSurvivalProbe() {}
 
     public static void main(String[] args) {
-        int durationSeconds = parseDuration(args);
-        try (RandomAccessFile lockFile = new RandomAccessFile(LOCK_PATH, "rw");
-             FileChannel channel = lockFile.getChannel();
-             FileLock lock = channel.tryLock()) {
-            if (lock == null) return;
-            runProbe(durationSeconds);
+        try (ResearchRuntime files = new ResearchRuntime("probe")) {
+            runtime = files;
+            if (args.length == 1) { files.control(args[0]); return; }
+            if (args.length != 2 || !args[0].equals("run")) throw new IllegalArgumentException("arguments");
+            files.acquire();
+            files.resetLog();
+            runProbe(ProcessSurvivalProbeCommand.clampDurationSeconds(Integer.parseInt(args[1])));
         } catch (Throwable error) {
-            append("FATAL type=" + error.getClass().getSimpleName()
-                    + " message=" + safe(error.getMessage()));
+            System.err.println("probe failed: " + error.getClass().getSimpleName());
+            System.exit(1);
         }
     }
 
     private static void runProbe(int durationSeconds) throws Exception {
-        File stop = new File(ProcessSurvivalProbeCommand.STOP_PATH);
-        if (stop.exists()) stop.delete();
-
-        truncateLog();
         long startedWall = System.currentTimeMillis();
         long startedElapsed = SystemClock.elapsedRealtime();
         long deadline = startedElapsed + durationSeconds * 1000L;
@@ -68,10 +59,9 @@ public final class ProcessSurvivalProbe {
 
         int sequence = 0;
         while (SystemClock.elapsedRealtime() < deadline) {
-            if (stop.exists()) {
+            if (runtime.stopped()) {
                 append("END reason=stop_requested seq=" + sequence
                         + " elapsed_ms=" + SystemClock.elapsedRealtime());
-                stop.delete();
                 return;
             }
 
@@ -111,33 +101,8 @@ public final class ProcessSurvivalProbe {
         }
     }
 
-    private static int parseDuration(String[] args) {
-        if (args == null || args.length == 0) {
-            return ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
-        }
-        try {
-            return ProcessSurvivalProbeCommand.clampDurationSeconds(
-                    Integer.parseInt(args[0]));
-        } catch (NumberFormatException ignored) {
-            return ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS;
-        }
-    }
-
-    private static void truncateLog() throws Exception {
-        try (FileOutputStream output =
-                     new FileOutputStream(ProcessSurvivalProbeCommand.LOG_PATH, false)) {
-            output.write(new byte[0]);
-        }
-    }
-
-    private static synchronized void append(String line) {
-        try (FileOutputStream output =
-                     new FileOutputStream(ProcessSurvivalProbeCommand.LOG_PATH, true)) {
-            output.write((line + "\n").getBytes(StandardCharsets.UTF_8));
-            output.flush();
-        } catch (Throwable ignored) {
-            // The probe must never start changing system state in response to log failure.
-        }
+    private static void append(String line) throws Exception {
+        runtime.append(line);
     }
 
     private static String readFirstLine(String path) {

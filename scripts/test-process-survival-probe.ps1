@@ -8,6 +8,11 @@ New-Item -ItemType Directory -Path $output -Force | Out-Null
 
 $package = 'com\jesty\rpchargingseparation'
 $sources = @(
+    (Join-Path $root "src\$package\ResearchLauncher.java"),
+    (Join-Path $root "src\$package\ResearchRuntime.java"),
+    (Join-Path $root "src\$package\RestoreWatchdogSentinel.java"),
+    (Join-Path $root "src\$package\ProcessSurvivalProbe.java"),
+    (Join-Path $root "src\$package\ProcessSurvivalProbeTool.java"),
     (Join-Path $root "src\$package\ProcessSurvivalProbeCommand.java"),
     (Join-Path $root "src\$package\RestoreOnlyWatchdogPolicy.java"),
     (Join-Path $root "src\$package\LinuxProcessIdentity.java"),
@@ -21,8 +26,11 @@ $sources = @(
     (Join-Path $root "tests\$package\LinuxProcessIdentityTest.java"),
     (Join-Path $root "tests\$package\RestoreWatchdogSentinelScriptTest.java"),
     (Join-Path $root "tests\$package\RestoreRetryPolicyTest.java"),
-    (Join-Path $root "tests\$package\BypassCrashWindowTest.java")
+    (Join-Path $root "tests\$package\BypassCrashWindowTest.java"),
+    (Join-Path $root "tests\$package\ResearchRuntimeTest.java"),
+    (Join-Path $root "tests\$package\RestoreWatchdogSentinelTest.java")
 )
+$sources += Get-ChildItem (Join-Path $root 'tests\fixtures\research-android') -Recurse -Filter '*.java' | Select-Object -ExpandProperty FullName
 
 & javac -encoding UTF-8 -source 8 -target 8 -d $output @sources
 if ($LASTEXITCODE -ne 0) { throw 'Process resilience research test compilation failed.' }
@@ -33,7 +41,9 @@ foreach ($test in @(
     'LinuxProcessIdentityTest',
     'RestoreWatchdogSentinelScriptTest',
     'RestoreRetryPolicyTest',
-    'BypassCrashWindowTest'
+    'BypassCrashWindowTest',
+    'ResearchRuntimeTest',
+    'RestoreWatchdogSentinelTest'
 )) {
     & java -cp $output "com.jesty.rpchargingseparation.$test"
     if ($LASTEXITCODE -ne 0) { throw "$test failed." }

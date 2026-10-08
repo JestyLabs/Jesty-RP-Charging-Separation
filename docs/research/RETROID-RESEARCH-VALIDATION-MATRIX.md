@@ -18,7 +18,12 @@ heartbeat sequence, lease, vendor settings and native charging readback. Change
 one variable at a time, only with supervision. Stop on unknown identity, unexpected
 charging state, device instability or a tool outside its lease. Finish by stopping
 the probe, verifying termination, cleaning its own files and confirming normal
-charging. Do not clean files while their worker is still active.
+charging. The runtime refuses Clean while its worker holds the exclusive lock. Save output
+before Clean or a new Start. Clean retains the lock inode/private directory and
+staged bootstrap artifacts. The first supervised Start must also validate private
+directory access, the selected candidate CLASSPATH and exact worker identity; API
+fixtures and green CI do not prove Android SELinux behavior. Do not switch or
+replace staged APKs/launchers during a session.
 
 ## Scenarios
 

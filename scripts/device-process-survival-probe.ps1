@@ -33,9 +33,9 @@ function Invoke-ProbeTool([string]$Arguments) {
 switch ($Action) {
     'Start' {
         $duration = [Math]::Max(60, [Math]::Min(1800, $DurationSeconds))
-        $temp = Join-Path ([System.IO.Path]::GetTempPath()) 'jesty-rp-process-survival-launch.sh'
+        $temp = [System.IO.Path]::GetTempFileName()
         try {
-            $scriptLines = & $AdbPath -s $Serial shell "CLASSPATH='$apkPath' app_process / $toolClass print-launcher $duration"
+            $scriptLines = & $AdbPath -s $Serial shell "CLASSPATH='$apkPath' app_process / $toolClass print-launcher $duration '$apkPath'"
             if ($LASTEXITCODE -ne 0 -or -not $scriptLines) {
                 throw 'Could not generate the device-side launcher script.'
             }

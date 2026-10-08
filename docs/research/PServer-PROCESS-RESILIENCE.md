@@ -97,14 +97,16 @@ The branch contains:
 - `ProcessSurvivalProbeTool`: manual adb/app_process entry point;
 - `LinuxProcessIdentity`: host-tested `/proc/<pid>/stat` identity parser;
 - `RestoreOnlyWatchdogPolicy`: pure fail-open policy model;
-- `RestoreWatchdogSentinelScript`: harmless restore-required sentinel;
+- `RestoreWatchdogSentinelScript`: staged sentinel launcher;
+- `RestoreWatchdogSentinel`: bounded marker-only worker;
+- `ResearchRuntime`: private files and exclusive worker/cleanup lock;
 - `scripts/device-process-survival-probe.ps1`: device harness.
 
 The probe:
 
 - has a 60-1800 second lease;
 - defaults to 10 minutes;
-- writes only under `/data/local/tmp/jesty-rp-process-survival*`;
+- writes runtime output only under `/data/jesty-rp-research-probe` (root-owned, mode 0700);
 - records PID, UID, SELinux context, boot ID, cgroup, OOM score, process group/session,
   starttime ticks and heartbeat gaps;
 - has a single-instance lock;
@@ -135,18 +137,29 @@ script launches bounded nohup app_process
         +-- verifies child still exists before launcher exits
 ```
 
-This isolates the physical experiment from vendor shell-parser quirks.
+Both launchers propagate the explicitly selected research APK; they never discover
+or substitute the installed APK. Keep the staged APK and launchers unchanged for
+the session. Staging assumes a trusted owner-controlled ADB session.
+
+The private runtime validates the `/data` parent ownership, the root-owned 0700
+directory and each opened regular file. A persistent file lock excludes concurrent
+workers and cleanup. Clean removes terminal log/stop files while holding that same
+lock; it retains the lock inode, private directory, staged launcher and APK. Those
+bootstrap artifacts can be removed separately after confirming termination.
+Unsupported permissions or SELinux access cause refusal; no alternate writable
+output directory is used. Launch acknowledgement alone is not identity evidence.
+Verify the exact worker PID/starttime, selected CLASSPATH and new log before testing.
 
 ## Host validation
 
-Current host tests:
+Current host regressions cover explicit candidate propagation from the PowerShell
+harness through the real Java printer to worker/control CLASSPATH; invalid paths;
+Android syscall metadata checks with API fixtures; actual host file-lock exclusion;
+duplicate start, active cleanup refusal, terminal cleanup and restart; elapsed-time
+lease expiry including scheduling gaps, wall-clock independence and unavailable
+observations. API fixtures do not establish Android filesystem or SELinux behavior.
 
-```text
-Process survival probe command tests passed: 3
-Restore-only watchdog policy tests passed: 5
-Linux process identity tests passed: 4
-Restore watchdog sentinel script tests passed: 3
-```
+The following shell experiment predates the current Java sentinel runtime:
 
 The harmless sentinel was also exercised against a disposable Linux owner process:
 
@@ -168,10 +181,13 @@ Keep charging separation **OFF** for the whole survival test.
 - confirm the intended Flip 2 serial and set $Serial locally;
 - stage a research APK under /data/local/tmp, set $ResearchApk to that device path, and leave the stable installation untouched. The tools reject a different model or unavailable research APK.
 
-### Start clean
+### Start a bounded session
+
+Capture any retained output before starting: Start acquires the exclusive lock and
+then resets the previous session log. First Start stages the launcher; Clean is for
+a terminated session after its evidence has been saved.
 
 ```powershell
-.\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Clean
 .\scripts\device-process-survival-probe.ps1 -Serial $Serial -ResearchApk $ResearchApk -Action Start -DurationSeconds 600
 ```
 

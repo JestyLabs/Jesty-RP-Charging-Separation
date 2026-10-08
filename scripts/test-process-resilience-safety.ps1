@@ -5,6 +5,9 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $package = 'src\com\jesty\rpchargingseparation'
 $targets = @(
+    (Join-Path $root "$package\ResearchRuntime.java"),
+    (Join-Path $root "$package\ResearchLauncher.java"),
+    (Join-Path $root "$package\RestoreWatchdogSentinel.java"),
     (Join-Path $root "$package\ProcessSurvivalProbe.java"),
     (Join-Path $root "$package\ProcessSurvivalProbeCommand.java"),
     (Join-Path $root "$package\ProcessSurvivalProbeTool.java"),

@@ -63,12 +63,15 @@ charging-control writes.
 The process-survival research sends only fixed-path commands through PServer:
 
 - `sh /data/local/tmp/jesty-rp-process-survival-launch.sh`
-- `tail` the fixed log
-- `touch` the fixed stop marker
-- `rm -f` fixed research artifacts
+- the same staged launcher with `status`, `stop` or `clean`
+- the corresponding fixed sentinel launcher and typed control action
 
-The launcher script is staged by ADB and has a bounded lease. It does not access
-charging sysfs or Settings.
+ADB stages a launcher pinned to the explicit research APK. The Java research
+runtime owns output in root-private directories and validates opened file metadata.
+Worker Start and Clean share a persistent exclusive file lock; cleanup never removes
+that lock inode. The sentinel lease uses elapsed boot time including suspend. These
+research paths do not access charging sysfs or Settings. The ADB staging session is
+owner-controlled; private output and bootstrap artifacts have separate lifetimes.
 
 ## Structural risk
 

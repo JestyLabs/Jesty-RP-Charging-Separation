@@ -56,9 +56,9 @@ switch ($Action) {
         Write-Host "Owner identity: pid=$($identity.Pid) start_ticks=$($identity.StartTicks)"
         Write-Host "Sentinel lease: $lease seconds"
 
-        $temp = Join-Path ([System.IO.Path]::GetTempPath()) 'jesty-rp-watchdog-sentinel.sh'
+        $temp = [System.IO.Path]::GetTempFileName()
         try {
-            $scriptLines = & $AdbPath -s $Serial shell "CLASSPATH='$apkPath' app_process / $toolClass print-sentinel $($identity.Pid) $($identity.StartTicks) $lease"
+            $scriptLines = & $AdbPath -s $Serial shell "CLASSPATH='$apkPath' app_process / $toolClass print-sentinel $($identity.Pid) $($identity.StartTicks) $lease '$apkPath'"
             if ($LASTEXITCODE -ne 0 -or -not $scriptLines) {
                 throw 'Could not generate sentinel script.'
             }
@@ -69,7 +69,7 @@ switch ($Action) {
             & $AdbPath -s $Serial shell chmod 700 $remoteScript
             if ($LASTEXITCODE -ne 0) { throw 'Could not chmod sentinel script.' }
             Invoke-ProbeTool 'sentinel-start'
-            Write-Host 'Sentinel armed. It has no charging-control command.'
+            Write-Host 'Sentinel launch acknowledged; verify worker identity with Status.'
         } finally {
             Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
         }

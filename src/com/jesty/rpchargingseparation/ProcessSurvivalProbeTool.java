@@ -7,7 +7,7 @@ import java.util.Base64;
  * adb/app_process entry point for process-resilience research.
  *
  * Script-print actions are local-only helpers for the adb harness. Mutating actions sent
- * through PServer are restricted to fixed research files under /data/local/tmp.
+ * through PServer use fixed staged launchers and root-private research output.
  */
 public final class ProcessSurvivalProbeTool {
     private ProcessSurvivalProbeTool() {}
@@ -18,14 +18,14 @@ public final class ProcessSurvivalProbeTool {
             if ("print-launcher".equals(action)) {
                 int duration = parseInt(args, 1,
                         ProcessSurvivalProbeCommand.DEFAULT_DURATION_SECONDS);
-                System.out.print(ProcessSurvivalProbeCommand.launcherScript(duration));
+                System.out.print(ProcessSurvivalProbeCommand.launcherScript(requiredArg(args, 2), duration));
                 return;
             }
             if ("print-sentinel".equals(action)) {
                 int pid = parseInt(args, 1, -1);
                 long startTicks = parseLong(args, 2, -1L);
                 int lease = parseInt(args, 3, 30);
-                System.out.print(RestoreWatchdogSentinelScript.build(pid, startTicks, lease));
+                System.out.print(RestoreWatchdogSentinelScript.build(requiredArg(args, 4), pid, startTicks, lease));
                 return;
             }
 
@@ -35,7 +35,7 @@ public final class ProcessSurvivalProbeTool {
                     return;
                 case "status":
                     print(decodeStatus(RootBridge.exec(ProcessSurvivalProbeCommand.status())),
-                            "no probe log");
+                            "UNKNOWN: probe status unavailable");
                     return;
                 case "stop":
                     submit(ProcessSurvivalProbeCommand.stop(), "stop marker");
@@ -48,7 +48,7 @@ public final class ProcessSurvivalProbeTool {
                     return;
                 case "sentinel-status":
                     print(decodeStatus(RootBridge.exec(RestoreWatchdogSentinelScript.statusCommand())),
-                            "sentinel pending");
+                            "UNKNOWN: sentinel status unavailable");
                     return;
                 case "sentinel-stop":
                     submit(RestoreWatchdogSentinelScript.stopCommand(), "sentinel stop marker");
@@ -57,8 +57,8 @@ public final class ProcessSurvivalProbeTool {
                     submit(RestoreWatchdogSentinelScript.cleanCommand(), "sentinel cleanup");
                     return;
                 default:
-                    System.err.println("usage: print-launcher [60..1800] | start | status | "
-                            + "stop | clean | print-sentinel <pid> <start_ticks> <lease_s> | "
+                    System.err.println("usage: print-launcher <60..1800> <research.apk> | start | status | "
+                            + "stop | clean | print-sentinel <pid> <start_ticks> <lease_s> <research.apk> | "
                             + "sentinel-start | sentinel-status | sentinel-stop | sentinel-clean");
                     System.exit(2);
             }
@@ -70,8 +70,10 @@ public final class ProcessSurvivalProbeTool {
     }
 
     private static void submit(String command, String label) throws Exception {
-        RootBridge.exec(command);
-        System.out.println(label + " submitted command_chars=" + command.length());
+        String receipt = RootBridge.exec(command);
+        if (receipt == null || !receipt.trim().equals("OK"))
+            throw new IllegalStateException(label + " rejected or unavailable");
+        System.out.println(label + " acknowledged; verify worker identity with Status");
     }
 
     private static void print(String value, String empty) {
@@ -81,6 +83,11 @@ public final class ProcessSurvivalProbeTool {
     private static String decodeStatus(String encoded) {
         if (encoded == null || encoded.trim().isEmpty()) return "";
         return new String(Base64.getDecoder().decode(encoded.trim()), StandardCharsets.UTF_8);
+    }
+
+    private static String requiredArg(String[] args, int index) {
+        if (args == null || args.length <= index) throw new IllegalArgumentException("research APK required");
+        return args[index];
     }
 
     private static int parseInt(String[] args, int index, int fallback) {
