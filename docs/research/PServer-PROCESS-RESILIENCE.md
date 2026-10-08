@@ -3,6 +3,14 @@
 Status: **research only**  
 Branch: `research/pserver-process-resilience`
 
+## Cross-device research update (2026-10-08)
+
+See [the public comparison assessment](PSERVER-CROSS-DEVICE-ASSESSMENT.md).
+The acquired servers share a close Binder core, while startup and hardware policy
+remain device-specific. Detailed security analysis and device identifiers remain
+local. This pass adds no helper-survival proof or charging authority. Existing local
+probe changes/physical notes were preserved outside this documentation commit.
+
 This workstream does not change release behavior, the charging state machine, charging
 sysfs writes, boot behavior, or the Android manifest.
 

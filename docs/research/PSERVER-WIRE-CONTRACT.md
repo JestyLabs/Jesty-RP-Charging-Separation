@@ -2,6 +2,15 @@
 
 Status: **research note**. No production bridge changes are authorized by this document.
 
+## Cross-device research update (2026-10-08)
+
+The [public assessment](PSERVER-CROSS-DEVICE-ASSESSMENT.md) confirms compatibility
+of the current transport for the acquired pair. Keep the released convention.
+Detailed server/security analysis remains local. The external survey below records
+the evidence available before that local comparison and does not justify changing
+the payload or adding automatic recovery. Acceptance and command success remain
+separate; commands/results must remain fixed and bounded.
+
 ## Current Jesty contract
 
 The Charging Separation app currently calls `ServiceManager.getService("PServerBinder")`

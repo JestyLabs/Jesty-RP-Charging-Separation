@@ -2,6 +2,16 @@
 
 Status: **research decision, not production implementation**
 
+## Cross-device evidence update (2026-10-08)
+
+[Verified Thor / Flip 2 comparison](PSERVER-CROSS-DEVICE-ASSESSMENT.md) establishes
+a common Binder/command core, with materially different startup and CPU/device
+management. It does not establish OEM cleaner survival or charging safety.
+The decision remains unchanged: Android owns charging policy; a future helper is
+restore-only and physically gated. Next discriminant is a harmless leased sentinel
+through Retroid Clear All, with separation OFF and exact identity/heartbeat tracking.
+Do not reuse Thor's boot_start hook or infer helper success from transact acceptance.
+
 ## Decision
 
 Do **not** move the full charging controller into a privileged root daemon yet.
