@@ -184,6 +184,15 @@ reporter's `.311` firmware.
 
 ### Unplug from active separation (release gate)
 
+The exact signed v1.5.10 APK was installed over v1.5.9 on the maintainer's
+Flip 2 `.130`. In Right away mode with USB attached, ADB showed native limit
+`10/10` and Android `Not charging` at 81%. After unplugging, the app showed
+READY and COPY DIAGNOSTICS showed limit `0/10` before reconnection. Reconnecting
+without changing the toggle restored `10/10` and `Not charging` at 80%.
+Turning bypass OFF then restored limit `0` and Android `Charging`. The automatic
+threshold mode and Force Stop sequence below were not repeated on this signed
+APK; the shared controller path has JDK scenario coverage.
+
 - [ ] On a signed test build, plug in and wait for `ACTIVE`, `Not charging`, and
   `charge_control_limit == charge_control_limit_max`.
 - [ ] Unplug without turning bypass off. Confirm `ARMED`, native limit `0`,

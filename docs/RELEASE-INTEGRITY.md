@@ -18,8 +18,12 @@ The Java scenarios, unsigned Android build, ZIP alignment, package/version
 inspection, and signature verification passed. The certificate matches the
 published v1.5.9 APK. This exact signed APK installed over v1.5.9 on the
 maintainer's Flip 2 `.130` without clearing data; version code 31 and native
-limit 0 were confirmed afterward. The new unplug transition still requires its
-physical checklist before it can be claimed as hardware-validated.
+limit 0 were confirmed afterward. In Right away mode, the signed APK went from
+USB attached `10/10` and `Not charging` to READY with limit `0/10` after
+unplugging, then back to `10/10` and `Not charging` on reconnection. Explicit
+OFF restored limit `0` and normal Android `Charging`. Automatic mode and Force
+Stop were not repeated on this signed APK; see the remaining checklist in
+`docs/DEVICE-VALIDATION.md`.
 
 ## 1.5.8 screen-off automatic threshold monitoring
 

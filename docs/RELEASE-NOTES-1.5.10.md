@@ -16,8 +16,10 @@ monitor active while the screen is off. See [issue #2](https://github.com/JestyL
 The issue remains open for confirmation of the underlying service behavior.
 
 The charging-controller scenarios, GitHub CI tests, and unsigned Android build
-passed. The new unplug transition has not yet completed the signed-APK physical
-check on a Retroid device.
+passed. The exact signed APK was installed over v1.5.9 on a Flip 2 `.130`:
+Right away mode restored limit `0/10` and showed READY on unplug, then returned
+to `10/10` and **Not charging** on reconnection. Turning bypass OFF restored
+normal charging. Automatic mode and Force Stop were not repeated on this APK.
 
 The APK must be signed with the existing release certificate so it can install
 over earlier versions without clearing app data.
