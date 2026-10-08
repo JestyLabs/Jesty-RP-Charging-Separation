@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restore and confirm normal charging before moving from active separation to
+  ARMED when USB is unplugged. Keep the bypass preference for the next plug-in;
+  a failed restore must not be shown as READY.
 - Add Android's recent process exit reasons to COPY DIAGNOSTICS and persist
   service-start and task-removal events. This helps distinguish a crash, low
   memory kill, and user-requested stop when monitoring disappears.
