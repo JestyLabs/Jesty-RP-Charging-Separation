@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.5.10
+
 - Restore and confirm normal charging before moving from active separation to
   ARMED when USB is unplugged. Keep the bypass preference for the next plug-in;
   a failed restore must not be shown as READY.

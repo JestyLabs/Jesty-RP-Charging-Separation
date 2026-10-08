@@ -4,7 +4,7 @@ param(
     [string]$JdkHome,
     [string]$Keystore,
     [string]$KeyAlias,
-    [string]$OutputName = 'Jesty-RP-Charging-Separation-1.5.9'
+    [string]$OutputName = 'Jesty-RP-Charging-Separation-1.5.10'
 )
 
 $ErrorActionPreference = 'Stop'
