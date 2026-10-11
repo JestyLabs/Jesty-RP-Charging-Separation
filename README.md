@@ -57,6 +57,7 @@ Charging Separation uses Retroid's built-in privileged controls to stop active b
 - Automatic safety fallback to normal charging if something looks wrong
 - Optional restore after reboot
 - In-app updates
+- **Quick Settings toggle** to turn Charging Separation on or off without opening the dashboard
 - Runs in the background - you can close the app
 
 The app does **not** physically disconnect the battery, so small positive or negative currents can still appear depending on load, charger, firmware and temperature.
@@ -65,8 +66,9 @@ The app does **not** physically disconnect the battery, so small positive or neg
 
 ### Quick Settings shortcut
 
-With a build that includes the shortcut installed, expand Android Quick Settings,
-open **Edit** (the pencil), and drag **Charging Separation** into your active tiles.
+Available in [v1.5.11 and later](https://github.com/JestyLabs/Jesty-RP-Charging-Separation/releases/tag/v1.5.11).
+After installing, expand Android Quick Settings, open **Edit** (the pencil), and
+drag **Charging Separation** into your active tiles.
 Tap it to enable or disable the feature using the mode and limits already configured
 in the app. Turning it off also disables automatic activation after reboot, just like
 the dashboard switch. A locked device asks you to unlock before changing the setting.
@@ -77,8 +79,10 @@ separation. OFF is marked unverified after a fresh process start until the contr
 confirms restoration; a restored label records the last controller confirmation, not
 an independent continuous hardware read. If OFF cannot start the service, the tile
 explicitly warns that OFF failed and asks you to open the app for reconciliation. Opening the
-panel or removing the tile does not change charging. A supervised manual ON/OFF
-cycle and dashboard OFF synchronization have been validated with native readback.
+panel or removing the tile does not change charging. On the Retroid Pocket Flip 2,
+a supervised manual ON/OFF cycle and dashboard OFF synchronization have been
+validated with native readback: ON reached the native maximum with `Not charging`;
+OFF restored zero with `Charging`.
 Locked-screen behavior, automatic-mode/USB transitions and broader physical
 compatibility remain follow-up validation, separate from process-survival research.
 
@@ -160,6 +164,7 @@ Before and while separation is active the app:
 3. Connect a suitable USB charger
 4. Enable **Bypass charging** and confirm `Not charging` in the live diagnostic
 5. (Optional) Enable **Maintain bypass charging after reboot**
+6. (Optional) Add **Charging Separation** to [Quick Settings](#quick-settings-shortcut) for an ON/OFF shortcut
 
 After that you can close the app. The controller continues running in the background.
 
