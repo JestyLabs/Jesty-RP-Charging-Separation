@@ -73,7 +73,10 @@ the dashboard switch. A locked device asks you to unlock before changing the set
 
 The highlighted tile means the feature is enabled. On Android 10 and later its
 subtitle distinguishes waiting for USB, charging to the configured limit and active
-separation. If the service cannot start, open the app to check charging. Opening the
+separation. OFF is marked unverified after a fresh process start until the controller
+confirms restoration; a restored label records the last controller confirmation, not
+an independent continuous hardware read. If OFF cannot start the service, the tile
+explicitly warns that OFF failed and asks you to open the app for reconciliation. Opening the
 panel or removing the tile does not change charging. This shortcut's physical
 validation is pending; it is separate from the process-survival investigation.
 

@@ -10,6 +10,7 @@ $sources = @('SeparationControl', 'ChargingSeparationTileService', 'TileStatus',
         Join-Path $root "src\$package\$_.java"
     }
 $sources += Join-Path $root "tests\$package\QuickSettingsTileTest.java"
+$sources += Join-Path $root "tests\$package\BypassControllerTest.java"
 $sources += Get-ChildItem (Join-Path $root 'tests\fixtures\quick-settings') -Recurse -Filter '*.java' | Select-Object -ExpandProperty FullName
 & javac -encoding UTF-8 -source 8 -target 8 -d $output @sources
 if ($LASTEXITCODE -ne 0) { throw 'Quick Settings fixture compilation failed.' }

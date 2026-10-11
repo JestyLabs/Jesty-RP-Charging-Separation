@@ -13,6 +13,9 @@ public final class ChargingSeparationTileService extends TileService {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean listening;
     private SharedPreferences prefs;
+    private Tile lastTile;
+    private int lastState = -1;
+    private String lastSubtitle;
     private final SharedPreferences.OnSharedPreferenceChangeListener changes =
             (settings, key) -> handler.post(this::render);
     private final Runnable refresh = new Runnable() {
@@ -28,6 +31,7 @@ public final class ChargingSeparationTileService extends TileService {
         if (listening) return;
         prefs = getSharedPreferences("state", MODE_PRIVATE);
         listening = true;
+        lastTile = null;
         prefs.registerOnSharedPreferenceChangeListener(changes);
         refresh.run();
     }
@@ -66,10 +70,16 @@ public final class ChargingSeparationTileService extends TileService {
         SharedPreferences settings = getSharedPreferences("state", MODE_PRIVATE);
         boolean enabled = settings.getBoolean(BypassService.PREF_DESIRED, false);
         boolean failed = settings.getBoolean(SeparationControl.PREF_START_ERROR, false);
+        int state = enabled ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE;
+        String subtitle = Build.VERSION.SDK_INT >= 29 ? TileStatus.subtitle(enabled, failed,
+                BypassService.state(), BypassService.hasPublishedState()) : "";
+        if (tile == lastTile && state == lastState && subtitle.equals(lastSubtitle)) return;
         tile.setLabel("Charging Separation");
-        tile.setState(enabled ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
-        if (Build.VERSION.SDK_INT >= 29) tile.setSubtitle(TileStatus.subtitle(enabled, failed,
-                BypassService.state()));
+        tile.setState(state);
+        if (Build.VERSION.SDK_INT >= 29) tile.setSubtitle(subtitle);
         tile.updateTile();
+        lastTile = tile;
+        lastState = state;
+        lastSubtitle = subtitle;
     }
 }
