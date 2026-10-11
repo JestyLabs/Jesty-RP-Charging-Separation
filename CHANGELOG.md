@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 1.5.11
+
+- Add a Charging Separation Quick Settings tile using the dashboard's existing
+  saved-choice and charging-service path. Keep configured mode and battery limits;
+  OFF also disables automatic activation after reboot.
+- Require unlocking before a locked-screen tile action. Show waiting for USB,
+  charging to the configured limit and active separation as distinct subtitles.
+- Distinguish requested OFF from the controller's last confirmed restore. Report
+  rejected OFF explicitly and retain the choice for later reconciliation in the app.
+- Update the system tile only when its displayed state changes; stop observing when
+  Quick Settings stops listening. No change to the charging controller or bridge.
+- Validate a supervised manual tile ON/OFF cycle with native limit/status readback
+  and dashboard OFF synchronization. Other physical lifecycle/compatibility cases
+  remain follow-up validation; process-survival research is separate.
+
 ## 1.5.10
 
 - Restore and confirm normal charging before moving from active separation to

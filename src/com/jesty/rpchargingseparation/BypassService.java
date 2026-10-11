@@ -54,6 +54,7 @@ public final class BypassService extends Service {
     private static final long POLL_SECONDS = 2L;
 
     private static volatile State state = State.OFF;
+    private static volatile boolean publishedState;
     private static volatile String detail = BypassController.OFF_REASON;
 
     private final AtomicBoolean tickQueued = new AtomicBoolean(false);
@@ -68,6 +69,7 @@ public final class BypassService extends Service {
     private int lastEventKey = Integer.MIN_VALUE;
 
     static State state() { return state; }
+    static boolean hasPublishedState() { return publishedState; }
     static String detail() { return detail; }
 
     private final BroadcastReceiver powerEvents = new BroadcastReceiver() {
@@ -144,6 +146,7 @@ public final class BypassService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        publishedState = false;
         boolean desired = prefs.getBoolean(PREF_DESIRED, false);
         String action = intent == null ? "sticky restart" : intent.getAction();
         Log.i(TAG, "Service start: " + action + ", desired=" + desired
@@ -161,6 +164,7 @@ public final class BypassService extends Service {
         } else {
             startForeground(NOTIFICATION_ID, notification("Restoring normal charging..."));
         }
+        prefs.edit().remove(SeparationControl.PREF_START_ERROR).apply();
         String source = action == null ? "start" : shortAction(action);
         worker.execute(() -> controller.start(source));
         return START_STICKY;
@@ -291,6 +295,7 @@ public final class BypassService extends Service {
         public void publish(State next, String nextDetail) {
             state = next;
             detail = nextDetail;
+            publishedState = true;
             updateNotification(nextDetail);
         }
 
