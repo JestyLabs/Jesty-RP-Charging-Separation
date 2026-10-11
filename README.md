@@ -77,8 +77,10 @@ separation. OFF is marked unverified after a fresh process start until the contr
 confirms restoration; a restored label records the last controller confirmation, not
 an independent continuous hardware read. If OFF cannot start the service, the tile
 explicitly warns that OFF failed and asks you to open the app for reconciliation. Opening the
-panel or removing the tile does not change charging. This shortcut's physical
-validation is pending; it is separate from the process-survival investigation.
+panel or removing the tile does not change charging. A supervised manual ON/OFF
+cycle and dashboard OFF synchronization have been validated with native readback.
+Locked-screen behavior, automatic-mode/USB transitions and broader physical
+compatibility remain follow-up validation, separate from process-survival research.
 
 ### How it works
 
