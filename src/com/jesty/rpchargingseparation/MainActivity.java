@@ -112,29 +112,20 @@ public final class MainActivity extends Activity {
 
         separationToggle.setOnCheckedChangeListener((button, checked) -> {
             if (suppressToggle) return;
-            SharedPreferences.Editor settings = prefs.edit()
-                    .putBoolean("desired_enabled", checked)
-                    .remove(BypassService.PREF_LAST_SAFETY_STOP);
-            if (!checked) {
-                settings.putBoolean("auto_on_boot", false);
-                autoBootToggle.setChecked(false);
+            boolean dispatched = SeparationControl.setEnabled(this, checked);
+            boolean saved = prefs.getBoolean(BypassService.PREF_DESIRED, false);
+            suppressToggle = true;
+            separationToggle.setChecked(saved);
+            suppressToggle = false;
+            if (!saved) autoBootToggle.setChecked(false);
+            offReconcileStarted = !saved;
+            setControlsEnabled(saved);
+            if (!dispatched) {
+                Toast.makeText(this, "Could not apply setting. Check charging status.",
+                        Toast.LENGTH_LONG).show();
             }
-            if (!settings.commit()) {
-                Toast.makeText(this, "Could not save bypass setting", Toast.LENGTH_LONG).show();
-                suppressToggle = true;
-                separationToggle.setChecked(!checked);
-                suppressToggle = false;
-                return;
-            }
-            offReconcileStarted = !checked;
-            setControlsEnabled(checked);
-            Intent service = new Intent(this, BypassService.class)
-                    .setAction(checked
-                            ? BypassService.ACTION_ENABLE
-                            : BypassService.ACTION_DISABLE);
-            if (checked && Build.VERSION.SDK_INT >= 26) startForegroundService(service);
-            else startService(service);
-            stateText.setText(checked ? "STARTING..." : "TURNING OFF...");
+            stateText.setText(dispatched ? (saved ? "STARTING..." : "TURNING OFF...")
+                    : "CHECK CHARGING STATUS");
         });
 
         if (prefs.getBoolean("desired_enabled", false)) {

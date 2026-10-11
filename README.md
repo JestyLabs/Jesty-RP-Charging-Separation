@@ -63,6 +63,20 @@ The app does **not** physically disconnect the battery, so small positive or neg
 
 ---
 
+### Quick Settings shortcut
+
+With a build that includes the shortcut installed, expand Android Quick Settings,
+open **Edit** (the pencil), and drag **Charging Separation** into your active tiles.
+Tap it to enable or disable the feature using the mode and limits already configured
+in the app. Turning it off also disables automatic activation after reboot, just like
+the dashboard switch. A locked device asks you to unlock before changing the setting.
+
+The highlighted tile means the feature is enabled. On Android 10 and later its
+subtitle distinguishes waiting for USB, charging to the configured limit and active
+separation. If the service cannot start, open the app to check charging. Opening the
+panel or removing the tile does not change charging. This shortcut's physical
+validation is pending; it is separate from the process-survival investigation.
+
 ### How it works
 
 | | Normal charging | Charging Separation |

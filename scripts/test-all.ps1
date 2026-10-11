@@ -8,7 +8,8 @@ foreach ($script in @(
     'test-update-version.ps1',
     'test-bypass-controller.ps1',
     'test-process-protection.ps1',
-    'test-process-protection-capture.ps1'
+    'test-process-protection-capture.ps1',
+    'test-quick-settings.ps1'
 )) {
     Write-Host "== $script"
     & (Join-Path $PSScriptRoot $script)

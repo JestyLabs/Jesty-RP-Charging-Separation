@@ -161,6 +161,7 @@ public final class BypassService extends Service {
         } else {
             startForeground(NOTIFICATION_ID, notification("Restoring normal charging..."));
         }
+        prefs.edit().remove(SeparationControl.PREF_START_ERROR).apply();
         String source = action == null ? "start" : shortAction(action);
         worker.execute(() -> controller.start(source));
         return START_STICKY;
