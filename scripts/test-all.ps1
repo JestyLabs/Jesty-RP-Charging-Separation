@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 foreach ($script in @(
     'test-charge-limit.ps1',
     'test-update-version.ps1',
+    'test-updater-checks.ps1',
     'test-bypass-controller.ps1',
     'test-process-protection.ps1',
     'test-process-protection-capture.ps1',
