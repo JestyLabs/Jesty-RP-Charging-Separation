@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "repo": "JestyLabs/Jesty-RP-Charging-Separation",
+  "date": "2026-10-13",
+  "baseline_main_sha": "ce219f715c23ff37617bfe1f13d720bccd9f5a63",
+  "archive_ref": "archive/rp-branch-prune-snapshot-2026-10-13",
+  "archive_tag": "archive/rp-branch-prune-2026-10-13",
+  "release": "v1.5.11",
+  "count": 9,
+  "branches": [
+    {
+      "name": "chore/actions-node24",
+      "head_sha": "674d473a030ee29dfe7f40d8af3a61f45bdc093c",
+      "merged_pr": 4
+    },
+    {
+      "name": "chore/pre-prune-archive",
+      "head_sha": "01002428374de2ee364d6cd124ca3c663fc9d647",
+      "merged_pr": 8
+    },
+    {
+      "name": "chore/public-sanitization-20261013",
+      "head_sha": "3e727ca19c5759c2cdaa248e1dbf532a977566bb",
+      "merged_pr": 16
+    },
+    {
+      "name": "chore/repo-housekeeping",
+      "head_sha": "da77431b00f1bdb39f2cbd26dc96041191349b50",
+      "merged_pr": 7
+    },
+    {
+      "name": "docs/provenance-record",
+      "head_sha": "ed56579c4cc31bcf0cc917278186b751705f4ec3",
+      "merged_pr": 6
+    },
+    {
+      "name": "docs/v1511-quick-settings",
+      "head_sha": "bffee84f8efab3b29906bd1b56f44ccb4353a4a6",
+      "merged_pr": 15
+    },
+    {
+      "name": "fix/issue2-reliability",
+      "head_sha": "f4863c9db50bf090cd6b579c9ab652082036fe7b",
+      "merged_pr": 3
+    },
+    {
+      "name": "fix/process-recovery-1.5.4",
+      "head_sha": "aa733ec3b83c6d84a0f6b07ba9316793e7ed1c79",
+      "merged_pr": 1
+    },
+    {
+      "name": "work/quick-settings-tile-20261011",
+      "head_sha": "776d88dcea3a1a01a53700959232365bcf1dae1d",
+      "merged_pr": 14
+    }
+  ]
+}
