@@ -16,3 +16,8 @@ External disclosure of detailed security findings requires the owner's explicit
 authorization. Do not send them to another service, repository or manufacturer by
 default. Removing current text does not erase previously published Git history,
 edit history, caches or third-party copies.
+
+Screenshots, artwork, binary attachments and external issue comments require
+manual privacy review; tracked-text CI scanners cannot inspect them or erase
+past Git history. Share only the minimum diagnostic fields needed to reproduce
+a charging-control issue.

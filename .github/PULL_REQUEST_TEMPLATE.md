@@ -11,6 +11,7 @@ Describe the problem and the measured behavior this change addresses.
 - [ ] Screen-off behavior was checked with the screen off and without
   reopening the app, when the change affects charging control.
 - [ ] No secrets, personal paths, serials, APKs, or unredacted logs were added.
+- [ ] `scripts/test-public-content.ps1` passes; screenshots and attachments were manually checked for private details.
 - [ ] Fail-closed restoration behavior was preserved.
 - [ ] Compatibility claims include real-device evidence.
 - [ ] Material AI assistance was disclosed.
