@@ -29,3 +29,12 @@ chrome-*-profile/
 
 # Final artwork is supplied separately before release
 incoming-art/
+
+# Private hardware evidence and diagnostic captures
+*.logcat
+*.trace
+*.bugreport
+*.pcap
+*device-serial*
+private-evidence/
+private-captures/
