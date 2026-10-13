@@ -59,6 +59,9 @@ public final class MainActivity extends Activity {
     private ScheduledExecutorService telemetryWorker;
     private AppUpdater updater;
     private TextView updateAction;
+    private String availableUpdateVersion;
+    private boolean updateCheckRunning;
+    private boolean updateCheckFailed;
     private SharedPreferences prefs;
     private ImageView backgroundImage;
     private boolean visualSeparated;
@@ -138,9 +141,19 @@ public final class MainActivity extends Activity {
         telemetryWorker = Executors.newSingleThreadScheduledExecutor();
         telemetryWorker.scheduleAtFixedRate(this::readAndRender, 0L, 1L, TimeUnit.SECONDS);
 
-        updater = new AppUpdater(this, version -> {
-            updateAction.setText("\u2191  UPDATE v" + version);
-            updateAction.setVisibility(View.VISIBLE);
+        updater = new AppUpdater(this, new AppUpdater.Listener() {
+            @Override
+            public void onUpdateAvailable(String version) {
+                availableUpdateVersion = version;
+                renderUpdateAction();
+            }
+
+            @Override
+            public void onCheckState(boolean checking, boolean failed) {
+                updateCheckRunning = checking;
+                updateCheckFailed = failed;
+                renderUpdateAction();
+            }
         });
         updater.start();
     }
@@ -149,6 +162,12 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (updater != null) updater.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (updater != null) updater.onPause();
+        super.onPause();
     }
 
     private View buildUi() {
@@ -621,18 +640,13 @@ public final class MainActivity extends Activity {
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setGravity(Gravity.CENTER_VERTICAL);
 
-        // Only shown once AppUpdater finds a newer stable release.
-        updateAction = topAction("\u2191  UPDATE");
-        updateAction.setTextColor(Color.rgb(36, 19, 56));
-        GradientDrawable highlight = new GradientDrawable();
-        highlight.setColor(YELLOW);
-        highlight.setCornerRadius(dp(21));
-        updateAction.setBackground(highlight);
+        // Always reachable: retry the GitHub check even after a transient failure.
+        updateAction = topAction("CHECK UPDATES");
         updateAction.setFocusable(true);
-        updateAction.setVisibility(View.GONE);
         updateAction.setOnClickListener(v -> {
-            if (updater != null) updater.promptUpdate();
+            if (updater != null) updater.onUpdateActionClicked();
         });
+        renderUpdateAction();
         LinearLayout.LayoutParams updateParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, dp(38));
         updateParams.setMargins(0, 0, dp(8), 0);
@@ -652,6 +666,24 @@ public final class MainActivity extends Activity {
         supportParams.setMargins(dp(8), 0, 0, 0);
         actions.addView(support, supportParams);
         return actions;
+    }
+
+    private void renderUpdateAction() {
+        if (updateAction == null) return;
+        GradientDrawable background = new GradientDrawable();
+        background.setCornerRadius(dp(21));
+        if (availableUpdateVersion != null) {
+            updateAction.setText("\u2191  UPDATE v" + availableUpdateVersion);
+            updateAction.setTextColor(Color.rgb(36, 19, 56));
+            background.setColor(YELLOW);
+        } else {
+            updateAction.setText(updateCheckRunning ? "CHECKING..."
+                    : updateCheckFailed ? "RETRY CHECK" : "CHECK UPDATES");
+            updateAction.setTextColor(YELLOW);
+            background.setColor(0xE0241338);
+            background.setStroke(dp(1), 0xCCB15BFF);
+        }
+        updateAction.setBackground(background);
     }
 
     private TextView topAction(String label) {
