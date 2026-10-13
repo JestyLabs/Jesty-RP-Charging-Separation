@@ -615,6 +615,23 @@ public final class MainActivity extends Activity {
         tempValue = addCard(row2, "TEMPERATURE");
         dashboard.addView(row2);
 
+        TextView resetTemperature = text("RESET TEMP MIN/MAX", 10f, MUTED, true);
+        resetTemperature.setLetterSpacing(0.08f);
+        resetTemperature.setPadding(dp(4), dp(8), dp(4), dp(4));
+        resetTemperature.setFocusable(true);
+        resetTemperature.setOnClickListener(v -> new android.app.AlertDialog.Builder(this)
+                .setTitle("Reset temperature records?")
+                .setMessage("The next battery reading will start a new Min/Max history.")
+                .setPositiveButton("Reset", (dialog, which) -> {
+                    BatteryTemperatureHistory.reset(prefs);
+                    Toast.makeText(this, "Temperature records reset",
+                            Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
+        dashboard.addView(resetTemperature, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         // Battery restriction can stop the service while the screen is off (issue #2).
         restrictionWarning = text("Android is restricting this app in the background, so "
                 + "bypass may stop while the screen is off. Open App info \u2192 Battery "
@@ -737,6 +754,15 @@ public final class MainActivity extends Activity {
         out.append("Android: ").append(Build.VERSION.RELEASE)
                 .append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
         out.append("Background restricted: ").append(backgroundRestricted()).append('\n');
+        BatteryTemperatureExtremes extremes = BatteryTemperatureHistory.read(prefs);
+        if (extremes.hasSamples()) {
+            out.append(String.format(Locale.US,
+                    "Battery temperature observed min/max: %.1f / %.1f C "
+                            + "(since last reset, sampled readings only)%n",
+                    extremes.minC(), extremes.maxC()));
+        } else {
+            out.append("Battery temperature observed min/max: not recorded yet\n");
+        }
         appendProcessProtection(out);
         boolean auto = BypassService.autoLimitMode(prefs);
         out.append("Bypass on: ").append(prefs.getBoolean("desired_enabled", false))
@@ -993,9 +1019,15 @@ public final class MainActivity extends Activity {
         deviceValue.setText(twoLine(
                 String.format(Locale.US, "~ %.1f W", telemetry.estimatedDeviceWatts()),
                 "estimated"));
+        BatteryTemperatureExtremes record = BatteryTemperatureHistory.record(
+                prefs, telemetry.temperatureC);
+        String minMax = record.hasSamples()
+                ? String.format(Locale.US, "min %.1f\u00b0  max %.1f\u00b0",
+                        record.minC(), record.maxC())
+                : "no valid samples";
         tempValue.setText(twoLine(
                 String.format(Locale.US, "%.1f \u00b0C", telemetry.temperatureC),
-                "battery"));
+                minMax));
         restrictionWarning.setVisibility(desired && backgroundRestricted()
                 ? View.VISIBLE : View.GONE);
         diagnostic.setText(Build.MODEL + "  ·  "
