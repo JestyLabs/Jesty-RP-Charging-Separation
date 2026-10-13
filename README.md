@@ -56,13 +56,30 @@ Charging Separation uses Retroid's built-in privileged controls to stop active b
 - Verifies that separation actually activated before reporting success
 - Automatic safety fallback to normal charging if something looks wrong
 - Optional restore after reboot
-- In-app updates
+- In-app updates (manual checking and failure/retry feedback in v1.5.12)
+- Battery temperature: observed minimum/maximum records with reset (v1.5.12)
 - **Quick Settings toggle** to turn Charging Separation on or off without opening the dashboard
 - Runs in the background - you can close the app
 
 The app does **not** physically disconnect the battery, so small positive or negative currents can still appear depending on load, charger, firmware and temperature.
 
 ---
+
+### Update checks and battery temperature history
+
+In v1.5.12, **CHECK UPDATES** is always visible in the dashboard's top-right
+actions. It queries the latest stable GitHub release on demand and reports a
+connection failure or an up-to-date result. Automatic checks are retried on
+the next eligible foreground return: at most hourly after success, or after
+five minutes following a failure. Downloads still require package/version,
+SHA-256 and signing-certificate verification plus Android's install confirmation.
+
+The temperature card records the **lowest and highest observed battery
+temperatures** across dashboard sessions and active charging-separation
+monitoring. Values are saved locally, without additional sensor polling,
+and **RESET TEMP MIN/MAX** starts a new record period. These are not the
+battery's lifetime extreme values, and gaps can occur while monitoring is
+inactive. Recording does not change charging decisions.
 
 ### Quick Settings shortcut
 
