@@ -15,7 +15,7 @@ public final class UpdaterCheckTest {
     public static void main(String[] args) throws Exception {
         long hour = UpdateCheckPolicy.REFRESH_INTERVAL_MS;
         long retry = UpdateCheckPolicy.FAILURE_RETRY_MS;
-        long now = 1_000_000L;
+        long now = 10_000_000L;
         check(UpdateCheckPolicy.shouldCheck(now, 0, 0, false), "first launch");
         check(!UpdateCheckPolicy.shouldCheck(now, now - hour + 1, 0, false), "fresh success");
         check(UpdateCheckPolicy.shouldCheck(now, now - hour, 0, false), "expired success");
