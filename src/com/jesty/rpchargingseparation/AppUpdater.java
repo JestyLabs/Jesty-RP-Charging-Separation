@@ -23,7 +23,6 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,7 +31,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -47,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class AppUpdater {
     interface Listener {
         void onUpdateAvailable(String version);
+        void onCheckState(boolean checking, boolean failed);
     }
 
     static final String REPOSITORY = "JestyLabs/Jesty-RP-Charging-Separation";
@@ -55,9 +54,9 @@ final class AppUpdater {
     private static final String TAG = "JestyRPUpdate";
     private static final String PREFS = "updates";
     private static final String PREF_LAST_CHECK = "last_check";
+    private static final String PREF_LAST_ATTEMPT = "last_attempt";
     private static final String PREF_RELEASE_JSON = "release_json";
     private static final String PREF_PROMPTED_VERSION = "prompted_version";
-    private static final long CHECK_INTERVAL_MS = 60L * 60L * 1000L;
     private static final int MAX_RELEASE_JSON_BYTES = 1024 * 1024;
     private static final long MAX_APK_BYTES = 64L * 1024L * 1024L;
 
@@ -84,9 +83,12 @@ final class AppUpdater {
     private final SharedPreferences prefs;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicBoolean busy = new AtomicBoolean(false);
+    private final AtomicBoolean checking = new AtomicBoolean(false);
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
     private Release available;
     private Release awaitingInstallPermission;
+    private Release promptAfterResume;
+    private boolean foreground;
 
     AppUpdater(Activity activity, Listener listener) {
         this.activity = activity;
@@ -94,46 +96,111 @@ final class AppUpdater {
         this.prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
-    /** Shows a previously found update immediately, then refreshes at most once an hour. */
+    /** Reuses valid cached metadata, refreshing when the retry policy permits. */
     void start() {
         Release cached = parseRelease(prefs.getString(PREF_RELEASE_JSON, null));
         if (cached != null && UpdateVersion.isNewer(cached.tag, installedVersion())) {
-            publish(cached, false);
+            publish(cached);
         }
-        long last = prefs.getLong(PREF_LAST_CHECK, 0L);
+        checkForUpdates(false);
+    }
+
+    /** The top-bar action is always available for a manual recheck. */
+    void onUpdateActionClicked() {
+        if (available != null) showUpdateDialog(available);
+        else checkForUpdates(true);
+    }
+
+    void onResume() {
+        foreground = true;
+        Release permissionRelease = awaitingInstallPermission;
+        if (permissionRelease != null) {
+            awaitingInstallPermission = null;
+            if (activity.getPackageManager().canRequestPackageInstalls()) {
+                download(permissionRelease);
+            } else {
+                Toast.makeText(activity, "Update needs permission to install apps",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+        if (promptAfterResume != null) {
+            Release pending = promptAfterResume;
+            promptAfterResume = null;
+            maybePrompt(pending);
+        }
+        checkForUpdates(false);
+    }
+
+    void onPause() {
+        foreground = false;
+    }
+
+    /** Manual checks ignore throttling; a failed automatic request retries after five minutes. */
+    private void checkForUpdates(boolean manual) {
+        if (busy.get() || checking.get()) return;
         long now = System.currentTimeMillis();
-        if (now - last < CHECK_INTERVAL_MS && now >= last) return;
+        if (!UpdateCheckPolicy.shouldCheck(now,
+                prefs.getLong(PREF_LAST_CHECK, 0L),
+                prefs.getLong(PREF_LAST_ATTEMPT, 0L), manual)) return;
+        if (!checking.compareAndSet(false, true)) return;
+        prefs.edit().putLong(PREF_LAST_ATTEMPT, now).apply();
+        listener.onCheckState(true, false);
         worker.execute(() -> {
             try {
-                String json = fetchLatestReleaseJson();
-                Release release = parseRelease(json);
-                prefs.edit()
-                        .putLong(PREF_LAST_CHECK, System.currentTimeMillis())
-                        .putString(PREF_RELEASE_JSON, release == null ? null : json)
-                        .apply();
-                if (release != null && UpdateVersion.isNewer(release.tag, installedVersion())) {
-                    onUi(() -> publish(release, true));
+                String json = UpdateHttp.fetchJson(LATEST_RELEASE_URL, MAX_RELEASE_JSON_BYTES);
+                Release latest = parseRelease(json);
+                if (latest == null) {
+                    throw new IOException("latest release has no valid signed APK metadata");
                 }
+                prefs.edit().putLong(PREF_LAST_CHECK, System.currentTimeMillis())
+                        .putString(PREF_RELEASE_JSON, json).apply();
+                onUi(() -> {
+                    boolean newer = UpdateVersion.isNewer(latest.tag, installedVersion());
+                    if (newer) {
+                        publish(latest);
+                    } else {
+                        available = null;
+                        listener.onUpdateAvailable(null);
+                    }
+                    listener.onCheckState(false, false);
+                    if (newer) {
+                        if (manual) showUpdateDialog(latest);
+                        else maybePrompt(latest);
+                    } else if (manual) {
+                        Toast.makeText(activity, "You're up to date (v" + installedVersion()
+                                + ")", Toast.LENGTH_LONG).show();
+                    }
+                });
             } catch (Throwable error) {
                 Log.w(TAG, "Update check failed", error);
+                onUi(() -> {
+                    listener.onCheckState(false, true);
+                    if (manual) {
+                        Toast.makeText(activity,
+                                "Could not check updates. Check connection and retry.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+            } finally {
+                checking.set(false);
             }
         });
     }
 
-    /** Called from the top-bar UPDATE button. */
-    void promptUpdate() {
-        if (available != null) showUpdateDialog(available);
+    private void publish(Release release) {
+        available = release;
+        listener.onUpdateAvailable(release.version());
     }
 
-    void onResume() {
-        Release release = awaitingInstallPermission;
-        if (release == null) return;
-        awaitingInstallPermission = null;
-        if (activity.getPackageManager().canRequestPackageInstalls()) {
-            download(release);
-        } else {
-            Toast.makeText(activity, "Update needs permission to install apps",
-                    Toast.LENGTH_LONG).show();
+    /** A dismissal is recorded only if the update dialog was really presented. */
+    private void maybePrompt(Release release) {
+        if (release.tag.equals(prefs.getString(PREF_PROMPTED_VERSION, null))) return;
+        if (!foreground) {
+            promptAfterResume = release;
+            return;
+        }
+        if (showUpdateDialog(release)) {
+            prefs.edit().putString(PREF_PROMPTED_VERSION, release.tag).apply();
         }
     }
 
@@ -142,17 +209,8 @@ final class AppUpdater {
         worker.shutdownNow();
     }
 
-    private void publish(Release release, boolean promptIfNew) {
-        available = release;
-        listener.onUpdateAvailable(release.version());
-        if (promptIfNew && !release.tag.equals(prefs.getString(PREF_PROMPTED_VERSION, null))) {
-            prefs.edit().putString(PREF_PROMPTED_VERSION, release.tag).apply();
-            showUpdateDialog(release);
-        }
-    }
-
-    private void showUpdateDialog(Release release) {
-        if (activity.isFinishing() || activity.isDestroyed()) return;
+    private boolean showUpdateDialog(Release release) {
+        if (!foreground || activity.isFinishing() || activity.isDestroyed()) return false;
         String message = String.format(Locale.US,
                 "v%s is ready. You're on v%s.\n\nYour settings will be kept.",
                 release.version(), installedVersion());
@@ -162,6 +220,7 @@ final class AppUpdater {
                 .setPositiveButton("Update", (dialog, which) -> startUpdate(release))
                 .setNegativeButton("Later", null)
                 .show();
+        return true;
     }
 
     private void startUpdate(Release release) {
@@ -362,28 +421,6 @@ final class AppUpdater {
         } catch (Exception error) {
             installer.abandonSession(sessionId);
             throw error;
-        }
-    }
-
-    private String fetchLatestReleaseJson() throws Exception {
-        HttpURLConnection connection = open(LATEST_RELEASE_URL, "application/vnd.github+json");
-        try {
-            int code = connection.getResponseCode();
-            if (code != HttpURLConnection.HTTP_OK) throw new IOException("HTTP " + code);
-            try (InputStream input = connection.getInputStream()) {
-                ByteArrayOutputStream body = new ByteArrayOutputStream();
-                byte[] buffer = new byte[16 * 1024];
-                int read;
-                while ((read = input.read(buffer)) >= 0) {
-                    body.write(buffer, 0, read);
-                    if (body.size() > MAX_RELEASE_JSON_BYTES) {
-                        throw new IOException("release response is too large");
-                    }
-                }
-                return new String(body.toByteArray(), StandardCharsets.UTF_8);
-            }
-        } finally {
-            connection.disconnect();
         }
     }
 
