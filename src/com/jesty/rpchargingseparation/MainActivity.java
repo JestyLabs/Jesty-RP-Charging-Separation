@@ -59,6 +59,9 @@ public final class MainActivity extends Activity {
     private ScheduledExecutorService telemetryWorker;
     private AppUpdater updater;
     private TextView updateAction;
+    private String availableUpdateVersion;
+    private boolean updateCheckRunning;
+    private boolean updateCheckFailed;
     private SharedPreferences prefs;
     private ImageView backgroundImage;
     private boolean visualSeparated;
@@ -138,9 +141,19 @@ public final class MainActivity extends Activity {
         telemetryWorker = Executors.newSingleThreadScheduledExecutor();
         telemetryWorker.scheduleAtFixedRate(this::readAndRender, 0L, 1L, TimeUnit.SECONDS);
 
-        updater = new AppUpdater(this, version -> {
-            updateAction.setText("\u2191  UPDATE v" + version);
-            updateAction.setVisibility(View.VISIBLE);
+        updater = new AppUpdater(this, new AppUpdater.Listener() {
+            @Override
+            public void onUpdateAvailable(String version) {
+                availableUpdateVersion = version;
+                renderUpdateAction();
+            }
+
+            @Override
+            public void onCheckState(boolean checking, boolean failed) {
+                updateCheckRunning = checking;
+                updateCheckFailed = failed;
+                renderUpdateAction();
+            }
         });
         updater.start();
     }
@@ -149,6 +162,12 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (updater != null) updater.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (updater != null) updater.onPause();
+        super.onPause();
     }
 
     private View buildUi() {
@@ -596,6 +615,23 @@ public final class MainActivity extends Activity {
         tempValue = addCard(row2, "TEMPERATURE");
         dashboard.addView(row2);
 
+        TextView resetTemperature = text("RESET TEMP MIN/MAX", 10f, MUTED, true);
+        resetTemperature.setLetterSpacing(0.08f);
+        resetTemperature.setPadding(dp(4), dp(8), dp(4), dp(4));
+        resetTemperature.setFocusable(true);
+        resetTemperature.setOnClickListener(v -> new android.app.AlertDialog.Builder(this)
+                .setTitle("Reset temperature records?")
+                .setMessage("The next battery reading will start a new Min/Max history.")
+                .setPositiveButton("Reset", (dialog, which) -> {
+                    BatteryTemperatureHistory.reset(prefs);
+                    Toast.makeText(this, "Temperature records reset",
+                            Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
+        dashboard.addView(resetTemperature, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         // Battery restriction can stop the service while the screen is off (issue #2).
         restrictionWarning = text("Android is restricting this app in the background, so "
                 + "bypass may stop while the screen is off. Open App info \u2192 Battery "
@@ -621,18 +657,13 @@ public final class MainActivity extends Activity {
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setGravity(Gravity.CENTER_VERTICAL);
 
-        // Only shown once AppUpdater finds a newer stable release.
-        updateAction = topAction("\u2191  UPDATE");
-        updateAction.setTextColor(Color.rgb(36, 19, 56));
-        GradientDrawable highlight = new GradientDrawable();
-        highlight.setColor(YELLOW);
-        highlight.setCornerRadius(dp(21));
-        updateAction.setBackground(highlight);
+        // Always reachable: retry the GitHub check even after a transient failure.
+        updateAction = topAction("CHECK UPDATES");
         updateAction.setFocusable(true);
-        updateAction.setVisibility(View.GONE);
         updateAction.setOnClickListener(v -> {
-            if (updater != null) updater.promptUpdate();
+            if (updater != null) updater.onUpdateActionClicked();
         });
+        renderUpdateAction();
         LinearLayout.LayoutParams updateParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, dp(38));
         updateParams.setMargins(0, 0, dp(8), 0);
@@ -652,6 +683,24 @@ public final class MainActivity extends Activity {
         supportParams.setMargins(dp(8), 0, 0, 0);
         actions.addView(support, supportParams);
         return actions;
+    }
+
+    private void renderUpdateAction() {
+        if (updateAction == null) return;
+        GradientDrawable background = new GradientDrawable();
+        background.setCornerRadius(dp(21));
+        if (availableUpdateVersion != null) {
+            updateAction.setText("\u2191  UPDATE v" + availableUpdateVersion);
+            updateAction.setTextColor(Color.rgb(36, 19, 56));
+            background.setColor(YELLOW);
+        } else {
+            updateAction.setText(updateCheckRunning ? "CHECKING..."
+                    : updateCheckFailed ? "RETRY CHECK" : "CHECK UPDATES");
+            updateAction.setTextColor(YELLOW);
+            background.setColor(0xE0241338);
+            background.setStroke(dp(1), 0xCCB15BFF);
+        }
+        updateAction.setBackground(background);
     }
 
     private TextView topAction(String label) {
@@ -705,6 +754,15 @@ public final class MainActivity extends Activity {
         out.append("Android: ").append(Build.VERSION.RELEASE)
                 .append(" (API ").append(Build.VERSION.SDK_INT).append(")\n");
         out.append("Background restricted: ").append(backgroundRestricted()).append('\n');
+        BatteryTemperatureExtremes extremes = BatteryTemperatureHistory.read(prefs);
+        if (extremes.hasSamples()) {
+            out.append(String.format(Locale.US,
+                    "Battery temperature observed min/max: %.1f / %.1f C "
+                            + "(since last reset, sampled readings only)%n",
+                    extremes.minC(), extremes.maxC()));
+        } else {
+            out.append("Battery temperature observed min/max: not recorded yet\n");
+        }
         appendProcessProtection(out);
         boolean auto = BypassService.autoLimitMode(prefs);
         out.append("Bypass on: ").append(prefs.getBoolean("desired_enabled", false))
@@ -961,9 +1019,15 @@ public final class MainActivity extends Activity {
         deviceValue.setText(twoLine(
                 String.format(Locale.US, "~ %.1f W", telemetry.estimatedDeviceWatts()),
                 "estimated"));
+        BatteryTemperatureExtremes record = BatteryTemperatureHistory.record(
+                prefs, telemetry.temperatureC);
+        String minMax = record.hasSamples()
+                ? String.format(Locale.US, "min %.1f\u00b0  max %.1f\u00b0",
+                        record.minC(), record.maxC())
+                : "no valid samples";
         tempValue.setText(twoLine(
                 String.format(Locale.US, "%.1f \u00b0C", telemetry.temperatureC),
-                "battery"));
+                minMax));
         restrictionWarning.setVisibility(desired && backgroundRestricted()
                 ? View.VISIBLE : View.GONE);
         diagnostic.setText(Build.MODEL + "  ·  "

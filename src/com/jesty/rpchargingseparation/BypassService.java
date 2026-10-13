@@ -243,7 +243,14 @@ public final class BypassService extends Service {
 
         @Override
         public PowerTelemetry read() throws Exception {
-            return PowerTelemetry.read();
+            PowerTelemetry reading = PowerTelemetry.read();
+            try {
+                BatteryTemperatureHistory.record(prefs, reading.temperatureC);
+            } catch (RuntimeException error) {
+                // Optional recording must never interfere with charging safety/control.
+                Log.w(TAG, "Battery temperature history unavailable", error);
+            }
+            return reading;
         }
 
         @Override
