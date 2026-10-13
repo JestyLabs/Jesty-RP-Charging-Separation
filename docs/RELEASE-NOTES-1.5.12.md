@@ -12,8 +12,19 @@ Failed checks are logged and can retry automatically after five minutes or
 immediately on a manual request. The automatic popup is postponed until the app
 is in the foreground and is marked prompted only when displayed.
 
-No charging controller, native bridge, boot receiver, foreground service, or
-Quick Settings charging control is modified.
+The temperature card now shows the observed battery-temperature minimum and
+maximum, kept in app-private preferences across restarts. Samples use the
+existing activity and active-service telemetry reads; there is no additional
+timer, background worker or polling. The **RESET TEMP MIN/MAX** option starts
+a new recording period with confirmation. Only new extremes are persisted;
+invalid sensor readings are excluded. Diagnostics include the observed range.
+These are observed readings (not lifetime battery records), and are not used
+to decide when charging starts or stops.
+
+No charging controller, native bridge, boot receiver, or Quick Settings
+charging control is modified. The foreground service's existing telemetry read
+now records the sample on a best-effort basis, without changing its charging
+decisions.
 
 New JDK tests use a local simulated GitHub endpoint to cover success, HTTP
 failure, oversized body and recovery, alongside retry-policy checks. The
