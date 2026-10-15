@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.5.13
+
+- Refresh the dashboard power reading when the app returns to the foreground.
+  Discard pending readings from before the app was paused so an old charger
+  status cannot replace the current one. Charging control is unchanged.
+
+## 1.5.12
+
+- Make update checking available from the dashboard, with retry and clearer
+  feedback after a failed check.
+- Record observed minimum and maximum battery temperatures with a reset option.
+
 ## 1.5.11
 
 - Add a Charging Separation Quick Settings tile using the dashboard's existing

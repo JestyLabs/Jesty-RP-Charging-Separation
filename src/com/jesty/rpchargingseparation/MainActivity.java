@@ -45,6 +45,7 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class MainActivity extends Activity {
@@ -57,6 +58,8 @@ public final class MainActivity extends Activity {
     private static final int STEP_PERCENT = 5;
 
     private ScheduledExecutorService telemetryWorker;
+    private ScheduledFuture<?> telemetryPoll;
+    private long telemetryGeneration;
     private AppUpdater updater;
     private TextView updateAction;
     private String availableUpdateVersion;
@@ -139,7 +142,6 @@ public final class MainActivity extends Activity {
         }
 
         telemetryWorker = Executors.newSingleThreadScheduledExecutor();
-        telemetryWorker.scheduleAtFixedRate(this::readAndRender, 0L, 1L, TimeUnit.SECONDS);
 
         updater = new AppUpdater(this, new AppUpdater.Listener() {
             @Override
@@ -161,11 +163,23 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // The dashboard needs a fresh reading when it becomes visible. Polling while
+        // paused can queue old UI updates that briefly show the previous charger state.
+        long generation = ++telemetryGeneration;
+        setState("CHECKING POWER...", MUTED);
+        stateDetail.setText("Reading current power state");
+        telemetryPoll = telemetryWorker.scheduleAtFixedRate(
+                () -> readAndRender(generation), 0L, 1L, TimeUnit.SECONDS);
         if (updater != null) updater.onResume();
     }
 
     @Override
     protected void onPause() {
+        telemetryGeneration++;
+        if (telemetryPoll != null) {
+            telemetryPoll.cancel(false);
+            telemetryPoll = null;
+        }
         if (updater != null) updater.onPause();
         super.onPause();
     }
@@ -923,10 +937,11 @@ public final class MainActivity extends Activity {
                 new int[] { Color.rgb(154, 108, 18), Color.rgb(86, 78, 101) }));
     }
 
-    private void readAndRender() {
+    private void readAndRender(long generation) {
         try {
             PowerTelemetry telemetry = PowerTelemetry.read();
             runOnUiThread(() -> {
+                if (generation != telemetryGeneration) return;
                 // If a previous process died after native separation was enabled,
                 // an OFF preference must still restore normal charging on reopen.
                 if (!prefs.getBoolean("desired_enabled", false) && telemetry.limit == 0) {
@@ -946,6 +961,7 @@ public final class MainActivity extends Activity {
             });
         } catch (Throwable error) {
             runOnUiThread(() -> {
+                if (generation != telemetryGeneration) return;
                 stateText.setText("NO POWER READINGS");
                 stateText.setTextColor(ERROR);
                 stateDetail.setText(error.getMessage());
