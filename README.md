@@ -74,18 +74,6 @@ Tap it to enable or disable the feature using the mode and limits already config
 in the app. Turning it off also disables automatic activation after reboot, just like
 the dashboard switch. A locked device asks you to unlock before changing the setting.
 
-### How it works
-
-| | Normal charging | Charging Separation |
-|---|-----------------|---------------------|
-| USB connected | Yes | **Yes** |
-| Handheld remains powered | Yes | **Yes** |
-| Battery actively charging | Yes | **No** |
-| Android battery state | `Charging` | **`Not charging`** |
-| Live safety monitoring | - | **Yes** |
-| App must stay open | - | **No** |
-| Root / Magisk needed | - | **No** |
-
 ---
 
 ### Measured results (Retroid Pocket Flip 2)
@@ -103,18 +91,6 @@ Controlled comparison, 30 one-second samples per state, same cable, screen state
 
 This is a short functional measurement, **not** a battery-health or longevity study.  
 Full method and samples → [benchmarks](docs/BENCHMARKS.md)
-
----
-
-### Set a battery threshold
-
-1. Enable **Bypass charging**
-2. Choose **At a battery level**
-3. Set **Stop charging at** (default 80%)
-4. Set **Charge again at** (default 70%)
-
-The two levels stay at least 5 percentage points apart.  
-Choose **Right away** if you want separation as soon as USB is connected.
 
 ---
 
